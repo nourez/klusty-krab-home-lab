@@ -8,7 +8,7 @@ spec:
     source:
         repoURL: git@github.com:nourez/klusty-krab-home-lab.git
         targetRevision: HEAD
-        path: apps/placeholder
+        path: manifests/placeholder
         directory:
             recurse: true
     destination:
