@@ -6,7 +6,8 @@ metadata:
 spec:
     syncPolicy:
         automated:
-            # selfHeal disabled - Longhorn modifies CRDs at runtime, selfHeal causes unnecessary sync noise
+            # selfHeal enabled - ignoreDifferences prevents sync noise from runtime CRD modifications
+            selfHeal: true
             prune: true
         syncOptions:
             - CreateNamespace=true
