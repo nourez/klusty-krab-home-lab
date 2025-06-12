@@ -22,3 +22,54 @@ spec:
     destination:
         server: https://kubernetes.default.svc
         namespace: longhorn-system
+    ignoreDifferences:
+        # Ignore differences in Longhorn CRDs that are modified at runtime
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: engineimages.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: engines.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: instancemanagers.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: nodes.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: replicas.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: settings.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: volumes.longhorn.io
+          jsonPointers:
+              - /spec/conversion
+              - /metadata/generation
+              - /metadata/resourceVersion
