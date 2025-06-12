@@ -3,6 +3,8 @@ kind: Application
 metadata:
     name: longhorn
     namespace: argocd
+    annotations:
+        argocd.argoproj.io/sync-wave: "1"
 spec:
     project: default
     source:
@@ -16,6 +18,10 @@ spec:
                   defaultClassReplicaCount: 1
                 csi:
                   kubeletRootDir: /var/lib/kubelet
+                serviceAccount:
+                  annotations:
+                    argocd.argoproj.io/hook: Sync
+                    argocd.argoproj.io/sync-wave: "-1"
     destination:
         server: https://kubernetes.default.svc
         namespace: longhorn-system
