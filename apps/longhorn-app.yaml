@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: longhorn
+    namespace: longhorn-system
+spec:
+    project: default
+    source:
+        repoURL: https://charts.longhorn.io
+        chart: longhorn
+        targetRevision: 1.9.0
+        helm:
+            values: |
+                persistence:
+                  defaultClass: true
+                  defaultClassReplicaCount: 1
+                csi:
+                  kubeletRootDir: /var/lib/kubelet
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: longhorn-system
+    syncPolicy:
+        automated:
+            selfHeal: true
+            prune: true
+        syncOptions:
+            - CreateNamespace=true
