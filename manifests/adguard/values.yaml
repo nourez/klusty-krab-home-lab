@@ -20,7 +20,7 @@ service:
                 enabled: true
                 primary: true
                 port: 3000
-                protocol: HTTP
+                protocol: http
                 targetPort: 3000
     dns-tcp:
         enabled: true
@@ -30,7 +30,7 @@ service:
             dns-tcp:
                 enabled: true
                 port: 53
-                protocol: TCP
+                protocol: tcp
                 targetPort: 53
     dns-udp:
         enabled: true
@@ -40,7 +40,7 @@ service:
             dns-udp:
                 enabled: true
                 port: 53
-                protocol: UDP
+                protocol: udp
                 targetPort: 53
 
 env:
