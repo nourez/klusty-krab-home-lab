@@ -69,4 +69,5 @@ ingress:
         enabled: false
 
 metrics:
-    enabled: true
+    main:
+        enabled: true
