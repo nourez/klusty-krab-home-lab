@@ -11,7 +11,7 @@ spec:
         targetRevision: "*"
         helm:
             valueFiles:
-                - https://raw.githubusercontent.com/nourez/klusty-krab-home-lab/HEAD/manifests/adguard/values.yaml
+                - https://raw.githubusercontent.com/nourez/klusty-krab-home-lab/78610b0/manifests/adguard/values.yaml
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard
