@@ -10,6 +10,11 @@ metadata:
 data:
     AdGuardHome.yaml: |
         dns:
+          protection_enabled: true
+          filtering_enabled: true
+          safebrowsing_enabled: true
+          safesearch_enabled: true
+          querylog_enabled: true
           rewrites:
             - domain: argocd.home
               answer: 10.0.0.240
