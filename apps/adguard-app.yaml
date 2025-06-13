@@ -6,9 +6,9 @@ metadata:
 spec:
     project: default
     sources:
-        - repoURL: https://charts.truecharts.org/
+        - repoURL: oci://tccr.io/truecharts
           chart: adguard-home
-          targetRevision: 11.5.7
+          targetRevision: "*"
           helm:
               valueFiles:
                   - $values/manifests/adguard/values.yaml
