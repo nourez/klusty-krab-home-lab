@@ -23,12 +23,6 @@ spec:
                       limits:
                           memory: "512Mi"
                           cpu: "500m"
-                  env:
-                      - name: AGH_CONFIG
-                        valueFrom:
-                            configMapKeyRef:
-                                name: adguard-config
-                                key: AdGuardHome.yaml
                   ports:
                       - containerPort: 53 #dns
                         name: dns
@@ -41,6 +35,9 @@ spec:
                   volumeMounts:
                       - name: adguard-data
                         mountPath: /opt/adguardhome/work
+                      - name: adguard-config
+                        mountPath: /opt/adguardhome/conf
+                        readOnly: true
             volumes:
                 - name: adguard-data
                   persistentVolumeClaim:
