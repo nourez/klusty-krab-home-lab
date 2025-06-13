@@ -46,11 +46,3 @@ config: |
           answer: "10.0.0.240"
         - domain: "plex.home"
           answer: "10.0.0.242"
-
-ingress:
-    main:
-        enabled: false
-
-metrics:
-    main:
-        enabled: false
