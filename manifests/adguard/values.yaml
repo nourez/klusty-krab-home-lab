@@ -1,3 +1,4 @@
+# Minimal configuration for gabe565 AdGuard Home chart
 env:
     TZ: "America/Toronto"
 
