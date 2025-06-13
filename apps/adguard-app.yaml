@@ -6,12 +6,12 @@ metadata:
 spec:
     project: default
     source:
-        repoURL: tccr.io/truecharts
+        repoURL: ghcr.io/gabe565/charts
         chart: adguard-home
         targetRevision: "*"
         helm:
             valueFiles:
-                - https://raw.githubusercontent.com/nourez/klusty-krab-home-lab/415c7ad/manifests/adguard/values.yaml
+                - https://raw.githubusercontent.com/nourez/klusty-krab-home-lab/HEAD/manifests/adguard/values.yaml
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard

@@ -30,7 +30,7 @@ service:
             dns-tcp:
                 enabled: true
                 port: 53
-                protocol: tcp
+                protocol: TCP
                 targetPort: 53
     dns-udp:
         enabled: true
@@ -40,29 +40,23 @@ service:
             dns-udp:
                 enabled: true
                 port: 53
-                protocol: udp
+                protocol: UDP
                 targetPort: 53
 
 env:
     TZ: "America/Toronto"
 
-# AdGuard Home specific configuration through workload environment
-workload:
-    main:
-        podSpec:
-            containers:
-                main:
-                    env:
-                        AGH_CONFIG: |
-                            dns:
-                                upstream_dns:
-                                    - 1.1.1.1
-                                    - 8.8.8.8
-                                rewrites:
-                                    - domain: "argocd.home"
-                                      answer: "10.0.0.240"
-                                    - domain: "plex.home"  
-                                      answer: "10.0.0.242"
+# AdGuard Home configuration
+config: |
+    dns:
+        upstream_dns:
+            - 1.1.1.1
+            - 8.8.8.8
+    rewrites:
+        - domain: "argocd.home"
+          answer: "10.0.0.240"
+        - domain: "plex.home"
+          answer: "10.0.0.242"
 
 ingress:
     main:
@@ -70,4 +64,4 @@ ingress:
 
 metrics:
     main:
-        enabled: true
+        enabled: false
