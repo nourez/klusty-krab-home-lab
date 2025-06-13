@@ -2,17 +2,24 @@
 env:
     TZ: "America/Toronto"
 
-service:
-    type: LoadBalancer
-    loadBalancerIP: 10.0.0.241
+services:
+    dns:
+        enabled: true
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.241
+        externalTrafficPolicy: Local
 
 persistence:
-    enabled: true
-    storageClass: longhorn
-    size: 5Gi
+    volumeClaimSpec:
+        accessModes:
+            - ReadWriteOnce
+        storageClassName: longhorn
+        resources:
+            requests:
+                storage: 5Gi
 
 # AdGuard Home configuration
-config:
+bootstrapConfig:
     dns:
         upstream_dns:
             - 1.1.1.1
