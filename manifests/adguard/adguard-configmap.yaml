@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: adguard-config
+    namespace: adguard
+    labels:
+        app: adguard-home
+        app.kubernetes.io/name: adguard
+        app.kubernetes.io/instance: adguard
+data:
+    AdGuardHome.yaml: |
+        dns:
+          rewrites:
+            - domain: argocd.home
+              answer: 10.0.0.240
+            - domain: plex.home
+              answer: 10.0.0.242
