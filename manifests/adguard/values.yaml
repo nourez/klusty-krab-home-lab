@@ -1,0 +1,25 @@
+persistence:
+    enabled: true
+    storageClass: longhorn
+    size: 10Gi
+
+service:
+    main:
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.241 # Use an available IP from MetalLB
+
+dns:
+    rewrites:
+        - domain: argocd.home
+          answer: 10.0.0.240
+        - domain: plex.home
+          answer: 10.0.0.242
+
+env:
+    TZ: "America/Toronto"
+
+metrics:
+    enabled: true
+
+ingress:
+    enabled: false # Not needed, using LoadBalancer
