@@ -6,7 +6,7 @@ metadata:
 spec:
     project: default
     source:
-        repoURL: ghcr.io/gabe565/charts
+        repoURL: https://helm-charts.rm3l.org
         chart: adguard-home
         targetRevision: "*"
         helm:
