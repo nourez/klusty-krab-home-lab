@@ -9,8 +9,34 @@ metadata:
         app.kubernetes.io/instance: adguard
 data:
     AdGuardHome.yaml: |
-        http:
-          address: 0.0.0.0:80
+        dns:
+          rewrites:
+            - domain: argocd.home
+              answer: 10.0.0.240
+            - domain: plex.home
+              answer: 10.0.0.242
+          protection_enabled: true
+          filtering_enabled: true
+          safebrowsing_enabled: true
+        filtering:
+          protection_enabled: true
+          filtering_enabled: true
+          safebrowsing_enabled: true
+          safe_search:
+            enabled: true
+        querylog:
+          enabled: true
+          file_enabled: true
+          interval: 2160h
+          size_memory: 1000
+        statistics:
+          enabled: true
+          interval: 24h
+        users:
+          - name: admin
+            password: $2a$10$ThisisaplaceholderpasswordhashForInitialSetup
+        auth_attempts: 5
+        block_auth_min: 15
         dns:
           bind_hosts:
             - 0.0.0.0
@@ -22,17 +48,4 @@ data:
             - 149.112.112.10
             - 2620:fe::10
             - 2620:fe::fe:10
-          protection_enabled: true
-          filtering_enabled: true
-          safebrowsing_enabled: true
-          rewrites:
-            - domain: argocd.home
-              answer: 10.0.0.240
-            - domain: plex.home
-              answer: 10.0.0.242
-        filtering:
-          protection_enabled: true
-          filtering_enabled: true
-          safebrowsing_enabled: true
-          safe_search:
-            enabled: true
+        schema_version: 29
