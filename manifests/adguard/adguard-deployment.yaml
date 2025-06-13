@@ -22,7 +22,9 @@ spec:
                       - |
                           echo "Applying ConfigMap as source of truth..."
                           cp /tmp/config/AdGuardHome.yaml /opt/adguardhome/work/AdGuardHome.yaml
-                          echo "ConfigMap applied successfully - any web UI changes will be lost on restart"
+                          chown 65534:65534 /opt/adguardhome/work/AdGuardHome.yaml
+                          chmod 600 /opt/adguardhome/work/AdGuardHome.yaml
+                          echo "ConfigMap applied successfully with correct permissions - any web UI changes will be lost on restart"
                   volumeMounts:
                       - name: adguard-data
                         mountPath: /opt/adguardhome/work
