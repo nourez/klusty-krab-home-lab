@@ -1,50 +1,37 @@
-persistence:
-    config:
-        enabled: true
-        accessMode: ReadWriteOnce
-        storageClass: longhorn
-        size: 2Gi
-    data:
-        enabled: true
-        accessMode: ReadWriteOnce
-        storageClass: longhorn
-        size: 5Gi
+env:
+    TZ: "America/Toronto"
 
 service:
     main:
-        enabled: true
-        primary: true
-        type: ClusterIP
         ports:
-            main:
-                enabled: true
-                primary: true
+            http:
                 port: 3000
-                protocol: http
-                targetPort: 3000
     dns-tcp:
         enabled: true
         type: LoadBalancer
         loadBalancerIP: 10.0.0.241
         ports:
             dns-tcp:
-                enabled: true
                 port: 53
                 protocol: TCP
-                targetPort: 53
     dns-udp:
         enabled: true
         type: LoadBalancer
         loadBalancerIP: 10.0.0.241
         ports:
             dns-udp:
-                enabled: true
                 port: 53
                 protocol: UDP
-                targetPort: 53
 
-env:
-    TZ: "America/Toronto"
+persistence:
+    config:
+        enabled: true
+        storageClass: longhorn
+        size: 2Gi
+    data:
+        enabled: true
+        storageClass: longhorn
+        size: 5Gi
 
 # AdGuard Home configuration
 config: |
