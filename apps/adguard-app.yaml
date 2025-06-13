@@ -5,13 +5,16 @@ metadata:
     namespace: argocd
 spec:
     project: default
-    source:
-        repoURL: https://k8s-at-home.com/charts/
-        chart: adguard-home
-        targetRevision: 5.5.2
-        helm:
-            valueFiles:
-                - manifests/adguard/values.yaml
+    sources:
+        - repoURL: https://k8s-at-home.com/charts/
+          chart: adguard-home
+          targetRevision: 5.5.2
+          helm:
+              valueFiles:
+                  - $values/manifests/adguard/values.yaml
+        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+          targetRevision: HEAD
+          ref: values
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard
