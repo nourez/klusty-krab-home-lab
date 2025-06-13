@@ -8,10 +8,10 @@ spec:
     source:
         repoURL: https://k8s-at-home.com/charts/
         chart: adguard-home
-        targetRevision: 5.2.0
+        targetRevision: 5.5.2
         helm:
             valueFiles:
-                - ../../manifests/adguard/values.yaml
+                - manifests/adguard/values.yaml
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard
