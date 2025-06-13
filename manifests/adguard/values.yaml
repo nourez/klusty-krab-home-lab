@@ -1,10 +1,12 @@
 persistence:
     config:
         enabled: true
+        accessMode: ReadWriteOnce
         storageClass: longhorn
         size: 2Gi
     data:
         enabled: true
+        accessMode: ReadWriteOnce
         storageClass: longhorn
         size: 5Gi
 
