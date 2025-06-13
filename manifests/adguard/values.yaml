@@ -1,25 +1,70 @@
 persistence:
-    enabled: true
-    storageClass: longhorn
-    size: 10Gi
+    config:
+        enabled: true
+        storageClass: longhorn
+        size: 2Gi
+    data:
+        enabled: true
+        storageClass: longhorn
+        size: 5Gi
 
 service:
     main:
+        enabled: true
+        primary: true
+        type: ClusterIP
+        ports:
+            main:
+                enabled: true
+                primary: true
+                port: 3000
+                protocol: HTTP
+                targetPort: 3000
+    dns-tcp:
+        enabled: true
         type: LoadBalancer
-        loadBalancerIP: 10.0.0.241 # Use an available IP from MetalLB
-
-dns:
-    rewrites:
-        - domain: argocd.home
-          answer: 10.0.0.240
-        - domain: plex.home
-          answer: 10.0.0.242
+        loadBalancerIP: 10.0.0.241
+        ports:
+            dns-tcp:
+                enabled: true
+                port: 53
+                protocol: TCP
+                targetPort: 53
+    dns-udp:
+        enabled: true
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.241
+        ports:
+            dns-udp:
+                enabled: true
+                port: 53
+                protocol: UDP
+                targetPort: 53
 
 env:
     TZ: "America/Toronto"
 
-metrics:
-    enabled: true
+# AdGuard Home specific configuration through workload environment
+workload:
+    main:
+        podSpec:
+            containers:
+                main:
+                    env:
+                        AGH_CONFIG: |
+                            dns:
+                                upstream_dns:
+                                    - 1.1.1.1
+                                    - 8.8.8.8
+                                rewrites:
+                                    - domain: "argocd.home"
+                                      answer: "10.0.0.240"
+                                    - domain: "plex.home"  
+                                      answer: "10.0.0.242"
 
 ingress:
-    enabled: false # Not needed, using LoadBalancer
+    main:
+        enabled: false
+
+metrics:
+    enabled: true

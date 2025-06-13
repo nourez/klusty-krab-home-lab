@@ -6,9 +6,9 @@ metadata:
 spec:
     project: default
     sources:
-        - repoURL: https://k8s-at-home.com/charts/
+        - repoURL: https://charts.truecharts.org/
           chart: adguard-home
-          targetRevision: 5.5.2
+          targetRevision: 11.5.7
           helm:
               valueFiles:
                   - $values/manifests/adguard/values.yaml
