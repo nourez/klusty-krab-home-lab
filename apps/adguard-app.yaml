@@ -5,16 +5,13 @@ metadata:
     namespace: argocd
 spec:
     project: default
-    sources:
-        - repoURL: oci://tccr.io/truecharts
-          chart: adguard-home
-          targetRevision: "*"
-          helm:
-              valueFiles:
-                  - $values/manifests/adguard/values.yaml
-        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
-          targetRevision: HEAD
-          ref: values
+    source:
+        repoURL: tccr.io/truecharts
+        chart: adguard-home
+        targetRevision: "*"
+        helm:
+            valueFiles:
+                - https://raw.githubusercontent.com/nourez/klusty-krab-home-lab/HEAD/manifests/adguard/values.yaml
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard
