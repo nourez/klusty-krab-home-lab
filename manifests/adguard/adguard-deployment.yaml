@@ -13,6 +13,23 @@ spec:
             labels:
                 app: adguard
         spec:
+            initContainers:
+                - name: config-init
+                  image: busybox:1.35
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          echo "Copying ConfigMap to work directory for AdGuard..."
+                          cp /tmp/config/AdGuardHome.yaml /opt/adguardhome/work/AdGuardHome.yaml
+                          chown 65534:65534 /opt/adguardhome/work/AdGuardHome.yaml
+                          echo "Config copied successfully"
+                  volumeMounts:
+                      - name: adguard-data
+                        mountPath: /opt/adguardhome/work
+                      - name: adguard-config
+                        mountPath: /tmp/config
+                        readOnly: true
             containers:
                 - name: adguard-home
                   image: adguard/adguardhome:latest
@@ -23,12 +40,7 @@ spec:
                       limits:
                           memory: "512Mi"
                           cpu: "500m"
-                  env:
-                      - name: AGH_CONFIG
-                        valueFrom:
-                            configMapKeyRef:
-                                name: adguard-config
-                                key: AdGuardHome.yaml
+
                   ports:
                       - containerPort: 53 #dns
                         name: dns
@@ -41,9 +53,6 @@ spec:
                   volumeMounts:
                       - name: adguard-data
                         mountPath: /opt/adguardhome/work
-                      - name: adguard-config
-                        mountPath: /opt/adguardhome/conf
-                        readOnly: true
             volumes:
                 - name: adguard-data
                   persistentVolumeClaim:
