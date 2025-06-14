@@ -8,7 +8,7 @@ metadata:
 spec:
     project: default
     source:
-        repoURL: https://github.com/nourezrawji/klusty-krab-home-lab.git # Update with your repo URL
+        repoURL: https://github.com/nourezrawji/klusty-krab-home-lab.git
         targetRevision: HEAD
         path: manifests/intel-gpu-dependencies
     destination:
