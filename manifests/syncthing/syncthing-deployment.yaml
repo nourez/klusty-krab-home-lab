@@ -23,6 +23,18 @@ spec:
                       - containerPort: 8384 # Web UI
                       - containerPort: 22000 # Sync
                       - containerPort: 21027 # Local discovery (UDP)
+                  livenessProbe:
+                      httpGet:
+                          path: /
+                          port: 8384
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+                  readinessProbe:
+                      httpGet:
+                          path: /
+                          port: 8384
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
                   resources:
                       requests:
                           memory: "128Mi"
