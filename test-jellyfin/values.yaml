@@ -1,0 +1,101 @@
+# Jellyfin Test Values - Intel N100 Hardware Transcoding Test
+# Based on your existing infrastructure setup
+
+# Server configuration
+server:
+    enabled: true
+    image:
+        repository: jellyfin/jellyfin
+        tag: "latest"
+        pullPolicy: IfNotPresent
+
+    # Intel GPU resources - same as your Plex setup
+    resources:
+        requests:
+            gpu.intel.com/i915: 1
+            memory: "1Gi"
+            cpu: "500m"
+        limits:
+            gpu.intel.com/i915: 1
+            memory: "4Gi"
+            cpu: "2000m"
+
+    # Security context for proper permissions
+    securityContext:
+        runAsUser: 0 # Root for testing - can be hardened later
+        runAsGroup: 0
+        fsGroup: 0
+        supplementalGroups: [44, 104] # video and render groups
+
+    # Environment variables for hardware transcoding
+    env:
+        TZ: "America/New_York" # Adjust to your timezone
+        # Enable hardware acceleration
+        JELLYFIN_PublishedServerUrl: "" # Will auto-detect
+
+    # Persistence for /dev/dri (Intel GPU access)
+    persistence:
+        dev-dri:
+            enabled: true
+            type: hostPath
+            hostPath: /dev/dri
+            mountPath: /dev/dri
+
+        # Config storage - using emptyDir for testing
+        config:
+            enabled: true
+            type: emptyDir
+            mountPath: /config
+
+        # Media storage - you can mount your media here
+        media:
+            enabled: true
+            type: hostPath
+            hostPath: /mnt/media # UPDATE THIS TO YOUR MEDIA PATH
+            mountPath: /media
+            readOnly: true
+
+    # Service configuration
+    service:
+        main:
+            enabled: true
+            type: LoadBalancer # Using MetalLB like your other services
+            loadBalancerIP: 10.0.0.247 # Assign specific IP from MetalLB pool
+            ports:
+                http:
+                    enabled: true
+                    port: 8096
+                    protocol: HTTP
+
+    # Node selector to ensure it runs on your GPU node
+    nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+
+# Machine Learning pod (optional but recommended)
+machine-learning:
+    enabled: true
+    image:
+        repository: jellyfin/jellyfin-ml
+        tag: "latest"
+        pullPolicy: IfNotPresent
+
+    resources:
+        requests:
+            memory: "1Gi"
+            cpu: "500m"
+        limits:
+            memory: "2Gi"
+            cpu: "1000m"
+
+    persistence:
+        cache:
+            enabled: true
+            type: emptyDir
+            mountPath: /cache
+
+# Disable other components for testing
+redis:
+    enabled: false
+
+postgresql:
+    enabled: false
