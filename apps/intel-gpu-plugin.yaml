@@ -8,9 +8,11 @@ metadata:
 spec:
     project: default
     source:
-        repoURL: https://github.com/nourezrawji/klusty-krab-home-lab.git # Update with your repo URL
+        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
         targetRevision: HEAD
         path: manifests/intel-gpu-plugin
+        directory:
+            recurse: true
     destination:
         server: https://kubernetes.default.svc
         namespace: intel-device-plugins-system
