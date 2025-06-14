@@ -14,11 +14,11 @@ persistence:
         # hostPath: /mnt/plex-config
     media:
         enabled: true
-        accessMode: ReadWriteOnce
+        type: hostPath
+        hostPath: /mnt/media
         # Use an existing PVC for your media, or use hostPath for direct mount
         # existingClaim: "plex-media-pvc"
-        hostPath: /mnt/media
-        size: 2500Gi
+        # size: 2500Gi  # Not needed for hostPath
     transcode:
         enabled: true
         storageClass: longhorn
