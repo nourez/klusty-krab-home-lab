@@ -25,17 +25,18 @@ persistence:
         accessMode: ReadWriteOnce
         size: 50Gi
 
-service:
-    main:
-        type: LoadBalancer
-        loadBalancerIP: 10.0.0.242
-        externalTrafficPolicy: Local
-        ports:
-            http:
-                port: 32400
-                targetPort: 32400
-                protocol: TCP
-                nodePort: 32400
+# Service not needed with hostNetwork: true - pod binds directly to node port 32400
+# service:
+#     main:
+#         type: LoadBalancer
+#         loadBalancerIP: 10.0.0.242
+#         externalTrafficPolicy: Local
+#         ports:
+#             http:
+#                 port: 32400
+#                 targetPort: 32400
+#                 protocol: TCP
+#                 nodePort: 32400
 
 resources:
     requests:
