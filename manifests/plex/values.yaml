@@ -18,6 +18,7 @@ persistence:
         # Use an existing PVC for your media, or use hostPath for direct mount
         # existingClaim: "plex-media-pvc"
         hostPath: /mnt/media
+        size: 2500Gi
     transcode:
         enabled: true
         storageClass: longhorn
