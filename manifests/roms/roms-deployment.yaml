@@ -25,7 +25,7 @@ spec:
                           memory: 512Mi
                   env:
                       - name: SAMBA_VOLUME_CONFIG_0
-                        value: "[roms]; path=/share; browsable=yes; read only=no; guest ok=yes; force user=root"
+                        value: "[ROMs]; path=/share; browsable=yes; read only=no; guest ok=yes; force user=root"
                   ports:
                       - containerPort: 445
                         protocol: TCP
