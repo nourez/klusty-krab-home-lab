@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: homebridge
+    namespace: homebridge
+    labels:
+        app: homebridge
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: homebridge
+    template:
+        metadata:
+            labels:
+                app: homebridge
+        spec:
+            hostNetwork: true # Equivalent to network_mode: host in Docker Compose
+            dnsPolicy: ClusterFirstWithHostNet # Required when using hostNetwork
+            containers:
+                - name: homebridge
+                  image: homebridge/homebridge:2025-06-10
+                  ports:
+                      - containerPort: 8581
+                        name: web-ui
+                        protocol: TCP
+                  volumeMounts:
+                      - name: homebridge-config
+                        mountPath: /homebridge
+                  env:
+                      - name: PGID
+                        value: "1000"
+                      - name: PUID
+                        value: "1000"
+                      - name: HOMEBRIDGE_CONFIG_UI
+                        value: "1"
+                      - name: HOMEBRIDGE_CONFIG_UI_PORT
+                        value: "8581"
+                  resources:
+                      requests:
+                          memory: "256Mi"
+                          cpu: "100m"
+                      limits:
+                          memory: "512Mi"
+                          cpu: "500m"
+                  livenessProbe:
+                      httpGet:
+                          path: /
+                          port: 8581
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+                  readinessProbe:
+                      httpGet:
+                          path: /
+                          port: 8581
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+            volumes:
+                - name: homebridge-config
+                  persistentVolumeClaim:
+                      claimName: homebridge-config
+            restartPolicy: Always
