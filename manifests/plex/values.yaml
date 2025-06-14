@@ -40,7 +40,7 @@ podSecurityContext:
     supplementalGroups:
         # Replace these GIDs with your host's "video" and "render" group IDs
         - 44 # typically 'video'
-        - 109 # typically 'render'
+        - 993 # typically 'render'
 
 # If you want to expose Plex with an Ingress instead, set this to true and configure ingress.hosts
 ingress:
