@@ -1,7 +1,7 @@
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
-    name: cert-manager
+    name: cert-manager-argocd
     namespace: kube-system
     annotations:
         argocd.argoproj.io/sync-wave: "1"

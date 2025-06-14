@@ -1,7 +1,7 @@
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
-    name: node-feature-discovery
+    name: node-feature-discovery-argocd
     namespace: kube-system
     annotations:
         argocd.argoproj.io/sync-wave: "1"
