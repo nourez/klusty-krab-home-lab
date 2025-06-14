@@ -3,11 +3,19 @@ kind: PersistentVolumeClaim
 metadata:
     name: adguard-pvc
     namespace: adguard
+    labels:
+        app: adguard-home
+        app.kubernetes.io/name: adguard
+        app.kubernetes.io/instance: adguard
+    annotations:
+        description: "PVC for AdGuard Home configuration and data"
 spec:
     accessModes:
         - ReadWriteOnce
+    storageClassName: longhorn
     resources:
         requests:
             storage: 5Gi
-    storageClassName: longhorn
-    volumeName: adguard-pv
+    selector:
+        matchLabels:
+            app: adguard
