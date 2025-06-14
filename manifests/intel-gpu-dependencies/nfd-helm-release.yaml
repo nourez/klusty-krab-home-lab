@@ -1,0 +1,14 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: node-feature-discovery
+    namespace: kube-system
+    annotations:
+        argocd.argoproj.io/sync-wave: "1"
+spec:
+    chart: node-feature-discovery
+    repo: https://kubernetes-sigs.github.io/node-feature-discovery/charts
+    targetNamespace: node-feature-discovery
+    createNamespace: true
+    valuesContent: |-
+        enableNodeFeatureApi: true

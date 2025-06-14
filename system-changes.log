@@ -1,0 +1,72 @@
+# System Changes Log for Klusty Krab Home Lab
+# Date: $(date)
+# Issue: Intel GPU Device Plugin "too many open files" error
+
+## Problem Analysis
+- Intel GPU device plugin failing with "too many open files" error
+- Root cause: inotify limits, specifically max_user_instances = 128 (too low)
+- Error occurs when creating file watchers for device plugin sockets
+
+## Current System State (Before Changes)
+- fs.inotify.max_user_watches: 122413
+- fs.inotify.max_user_instances: 128 (PROBLEMATIC)
+- fs.inotify.max_queued_events: 16384
+
+## Proposed Changes
+- Increase fs.inotify.max_user_instances from 128 to 1024
+- This will allow more inotify instances for file watching
+
+## Performance Impact Analysis
+- fs.inotify.max_user_instances: Each instance uses minimal memory (~200 bytes per watch)
+- Increasing from 128 to 1024 = ~800 additional instances max
+- Memory impact: Negligible on modern systems (< 1MB total)
+- No performance degradation expected
+
+## GPU Plugin Analysis
+- Current status: CrashLoopBackOff due to inotify limits
+- GPU resources: gpu.intel.com/i915: 0 (not available due to crash)
+- GPU monitoring: gpu.intel.com/i915_monitoring: 1 (capacity) but 0 (allocatable)
+- The "sample" name is just the default CR name, this IS the actual plugin
+- Plugin is REQUIRED for Plex GPU acceleration
+
+## Decision
+- The Intel GPU device plugin is essential for Plex hardware transcoding
+- Without it, Plex cannot access the Intel GPU for hardware acceleration
+- The inotify limit increase is safe and necessary
+
+## Changes Made
+1. Created privileged pod (fix-inotify-limits.yaml) to access host system
+2. Increased fs.inotify.max_user_instances from 128 to 1024:
+   - Temporary: echo 1024 > /proc/sys/fs/inotify/max_user_instances
+   - Permanent: Added "fs.inotify.max_user_instances=1024" to /etc/sysctl.conf
+3. Restarted Intel GPU device plugin pod
+4. Cleaned up privileged pod
+
+## Results
+✅ Intel GPU device plugin now running successfully
+✅ GPU resources now available:
+   - gpu.intel.com/i915: 1 (Capacity: 1, Allocatable: 1)
+   - gpu.intel.com/i915_monitoring: 1 (Capacity: 1, Allocatable: 1)
+✅ Ready for Plex installation with GPU acceleration
+
+## GitOps Implementation
+Created ArgoCD-ready manifests for repeatable deployment:
+
+### Files Created:
+- manifests/intel-gpu-plugin/kustomization.yaml
+- manifests/intel-gpu-plugin/system-config-daemonset.yaml
+- manifests/intel-gpu-plugin/gpu-device-plugin-values.yaml
+- manifests/intel-gpu-plugin/README.md
+- manifests/intel-gpu-dependencies/kustomization.yaml
+- manifests/intel-gpu-dependencies/nfd-helm-release.yaml
+- manifests/intel-gpu-dependencies/cert-manager-helm-release.yaml
+- manifests/intel-gpu-dependencies/intel-operator-helm-release.yaml
+- argocd-apps/intel-gpu-dependencies.yaml
+- argocd-apps/intel-gpu-plugin.yaml
+
+### Features:
+✅ Automated inotify limits configuration via DaemonSet
+✅ Proper sync wave ordering for dependencies
+✅ Self-healing and monitoring of system configuration
+✅ Complete GitOps workflow for future deployments
+✅ Documentation for troubleshooting and maintenance 

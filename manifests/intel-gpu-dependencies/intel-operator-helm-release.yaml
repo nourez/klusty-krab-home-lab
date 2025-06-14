@@ -1,0 +1,16 @@
+apiVersion: helm.cattle.io/v1
+kind: HelmChart
+metadata:
+    name: intel-device-plugins-operator
+    namespace: kube-system
+    annotations:
+        argocd.argoproj.io/sync-wave: "2"
+spec:
+    chart: intel-device-plugins-operator
+    repo: https://intel.github.io/helm-charts
+    targetNamespace: intel-device-plugins-system
+    createNamespace: true
+    valuesContent: |-
+        operator:
+          image:
+            tag: 0.32.1

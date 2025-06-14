@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: intel-gpu-plugin
+    namespace: argocd
+    annotations:
+        argocd.argoproj.io/sync-wave: "3"
+spec:
+    project: default
+    source:
+        repoURL: https://github.com/nourezrawji/klusty-krab-home-lab.git # Update with your repo URL
+        targetRevision: HEAD
+        path: manifests/intel-gpu-plugin
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: intel-device-plugins-system
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+        syncOptions:
+            - CreateNamespace=true
+            - ServerSideApply=true
+        retry:
+            limit: 5
+            backoff:
+                duration: 5s
+                factor: 2
+                maxDuration: 3m
