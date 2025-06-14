@@ -12,7 +12,8 @@ spec:
             - CreateNamespace=true
     project: default
     source:
-        repoURL: oci://ghcr.io/gabe565/charts/plex
+        repoURL: oci://ghcr.io/gabe565/charts
+        chart: plex
         targetRevision: 1.5.1
         helm:
             valueFiles:
