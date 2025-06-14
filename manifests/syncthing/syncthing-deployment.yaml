@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: syncthing
+    namespace: syncthing
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: syncthing
+    template:
+        metadata:
+            labels:
+                app: syncthing
+        spec:
+            containers:
+                - name: syncthing
+                  image: syncthing/syncthing:1.29
+                  env:
+                      - name: TZ
+                        value: America/Toronto
+                  ports:
+                      - containerPort: 8384 # Web UI
+                      - containerPort: 22000 # Sync
+                      - containerPort: 21027 # Local discovery (UDP)
+                  resources:
+                      requests:
+                          memory: "128Mi"
+                          cpu: "100m"
+                      limits:
+                          memory: "512Mi"
+                          cpu: "500m"
+                  volumeMounts:
+                      - name: saves
+                        mountPath: /data
+            volumes:
+                - name: saves
+                  persistentVolumeClaim:
+                      claimName: syncthing-pvc

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: syncthing
+    namespace: syncthing
+spec:
+    type: LoadBalancer
+    loadBalancerIP: 10.0.0.245 # Reserve this in MetalLB
+    ports:
+        - name: web
+          port: 80
+          targetPort: 8384
+          protocol: TCP
+        - name: sync
+          port: 22000
+          targetPort: 22000
+          protocol: TCP
+        - name: discovery
+          port: 21027
+          targetPort: 21027
+          protocol: UDP
+    selector:
+        app: syncthing
