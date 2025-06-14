@@ -11,8 +11,6 @@ spec:
         repoURL: git@github.com:nourez/klusty-krab-home-lab.git
         targetRevision: HEAD
         path: manifests/intel-gpu-plugin
-        directory:
-            recurse: true
     destination:
         server: https://kubernetes.default.svc
         namespace: intel-device-plugins-system
