@@ -1,7 +1,7 @@
 apiVersion: helm.cattle.io/v1
 kind: HelmChart
 metadata:
-    name: intel-device-plugins-operator-argocd
+    name: intel-device-plugins-operator
     namespace: kube-system
     annotations:
         argocd.argoproj.io/sync-wave: "2"
