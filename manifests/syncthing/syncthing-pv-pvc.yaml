@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: syncthing-pv
+spec:
+    capacity:
+        storage: 50Gi
+    accessModes:
+        - ReadWriteMany
+    hostPath:
+        path: /mnt/retrogaming/Saves
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: syncthing-pvc
+    namespace: syncthing
+spec:
+    storageClassName: ""
+    accessModes:
+        - ReadWriteMany
+    resources:
+        requests:
+            storage: 50Gi
+    volumeName: syncthing-pv

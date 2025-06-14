@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: syncthing
+    namespace: argocd
+spec:
+    project: default
+    source:
+        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+        targetRevision: HEAD
+        path: manifests/syncthing
+        directory:
+            recurse: true
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: syncthing
+    syncPolicy:
+        automated:
+            selfHeal: true
+            prune: true
+        syncOptions:
+            - CreateNamespace=true
