@@ -19,7 +19,7 @@ spec:
             dnsPolicy: ClusterFirstWithHostNet # Required when using hostNetwork
             containers:
                 - name: homebridge
-                  image: homebridge/homebridge:latest
+                  image: homebridge/homebridge:2025-06-10
                   ports:
                       - containerPort: 8581
                         name: web-ui
