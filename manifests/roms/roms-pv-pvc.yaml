@@ -16,6 +16,7 @@ metadata:
     name: roms-pvc
     namespace: roms
 spec:
+    storageClassName: ""
     accessModes:
         - ReadWriteMany
     resources:
