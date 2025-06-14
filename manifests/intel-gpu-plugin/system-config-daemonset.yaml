@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+    name: intel-gpu-system-config
+    namespace: intel-device-plugins-system
+    labels:
+        app: intel-gpu-system-config
+    annotations:
+        argocd.argoproj.io/sync-wave: "1"
+spec:
+    selector:
+        matchLabels:
+            app: intel-gpu-system-config
+    template:
+        metadata:
+            labels:
+                app: intel-gpu-system-config
+        spec:
+            hostNetwork: true
+            hostPID: true
+            tolerations:
+                - operator: Exists
+            nodeSelector:
+                intel.feature.node.kubernetes.io/gpu: "true"
+            containers:
+                - name: system-config
+                  image: ubuntu:24.04
+                  command: ["/bin/bash"]
+                  args:
+                      - -c
+                      - |
+                          set -e
+                          echo "Configuring inotify limits for Intel GPU plugin..."
+
+                          # Set current limits
+                          echo 1024 > /host/proc/sys/fs/inotify/max_user_instances
+                          echo "Current inotify max_user_instances set to: $(cat /host/proc/sys/fs/inotify/max_user_instances)"
+
+                          # Make persistent across reboots
+                          if ! grep -q "fs.inotify.max_user_instances" /host/etc/sysctl.conf; then
+                            echo "fs.inotify.max_user_instances=1024" >> /host/etc/sysctl.conf
+                            echo "Added persistent inotify configuration to sysctl.conf"
+                          else
+                            echo "Inotify configuration already exists in sysctl.conf"
+                          fi
+
+                          # Keep container running to maintain the DaemonSet
+                          echo "System configuration complete. Monitoring..."
+                          while true; do
+                            current_limit=$(cat /host/proc/sys/fs/inotify/max_user_instances)
+                            if [ "$current_limit" -lt 1024 ]; then
+                              echo "Inotify limit dropped to $current_limit, restoring to 1024"
+                              echo 1024 > /host/proc/sys/fs/inotify/max_user_instances
+                            fi
+                            sleep 300  # Check every 5 minutes
+                          done
+                  securityContext:
+                      privileged: true
+                  volumeMounts:
+                      - name: host-proc
+                        mountPath: /host/proc
+                      - name: host-etc
+                        mountPath: /host/etc
+                  resources:
+                      requests:
+                          cpu: 10m
+                          memory: 32Mi
+                      limits:
+                          cpu: 100m
+                          memory: 128Mi
+            volumes:
+                - name: host-proc
+                  hostPath:
+                      path: /proc
+                - name: host-etc
+                  hostPath:
+                      path: /etc
+            restartPolicy: Always

@@ -1,0 +1,49 @@
+env:
+    TZ: "America/Toronto"
+    # Uncomment and fill if you need to claim the server
+    # PLEX_CLAIM: "claim-xxxxxxx"
+
+persistence:
+    config:
+        enabled: true
+        storageClass: longhorn
+        size: 5Gi
+        # If you want to use hostPath instead of a PVC:
+        # existingClaim: ""
+        # hostPath: /mnt/plex-config
+    media:
+        enabled: true
+        # Use an existing PVC for your media, or use hostPath for direct mount
+        # existingClaim: "plex-media-pvc"
+        hostPath: /mnt/media
+    transcode:
+        enabled: true
+        storageClass: longhorn
+        size: 50Gi
+
+service:
+    main:
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.242
+        ports:
+            - port: 32400
+              targetPort: 32400
+              protocol: TCP
+
+resources:
+    requests:
+        gpu.intel.com/i915: 1
+    limits:
+        gpu.intel.com/i915: 1
+
+podSecurityContext:
+    supplementalGroups:
+        # Replace these GIDs with your host's "video" and "render" group IDs
+        - 44 # typically 'video'
+        - 109 # typically 'render'
+
+# If you want to expose Plex with an Ingress instead, set this to true and configure ingress.hosts
+ingress:
+    enabled: false
+# Optionally, configure DNS rewrites in AdGuard:
+# plex.home -> 10.0.0.242

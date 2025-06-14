@@ -1,0 +1,35 @@
+gpuDevicePlugin:
+    logLevel: 2
+    sharedDevNum: 1
+    enableMonitoring: true
+    nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+
+    # Security context to increase file descriptor limits
+    securityContext:
+        runAsNonRoot: false
+        runAsUser: 0
+        capabilities:
+            add: ["SYS_ADMIN"]
+
+    # Resource limits
+    resources:
+        limits:
+            cpu: 250m
+            memory: 128Mi
+        requests:
+            cpu: 100m
+            memory: 64Mi
+
+    # Pod security context to handle ulimits
+    podSecurityContext:
+        sysctls:
+            - name: fs.file-max
+              value: "2097152"
+
+    # Environment variables for file descriptor limits
+    env:
+        - name: RLIMIT_NOFILE
+          value: "65536"
+
+tolerations: []
