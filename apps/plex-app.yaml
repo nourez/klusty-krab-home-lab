@@ -11,13 +11,16 @@ spec:
         syncOptions:
             - CreateNamespace=true
     project: default
-    source:
-        repoURL: ghcr.io/gabe565/charts
-        chart: plex
-        targetRevision: 0.5.1
-        helm:
-            valueFiles:
-                - manifests/plex/values.yaml
+    sources:
+        - repoURL: ghcr.io/gabe565/charts
+          chart: plex
+          targetRevision: 0.5.1
+          helm:
+              valueFiles:
+                  - $values/manifests/plex/values.yaml
+        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+          targetRevision: HEAD
+          ref: values
 
     destination:
         server: https://kubernetes.default.svc
