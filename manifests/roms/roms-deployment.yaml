@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: samba
+    namespace: roms
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: samba
+    template:
+        metadata:
+            labels:
+                app: samba
+        spec:
+            containers:
+                - name: samba
+                  image: ghcr.io/servercontainers/samba:latest
+                  resources:
+                      requests:
+                          cpu: 100m
+                          memory: 128Mi
+                      limits:
+                          cpu: 500m
+                          memory: 512Mi
+                  env:
+                      - name: SAMBA_VOLUME_CONFIG_0
+                        value: "[roms]; path=/share; browsable=yes; read only=no; guest ok=yes; force user=root"
+                  ports:
+                      - containerPort: 445
+                        protocol: TCP
+                  volumeMounts:
+                      - name: roms
+                        mountPath: /share
+            volumes:
+                - name: roms
+                  persistentVolumeClaim:
+                      claimName: roms-pvc

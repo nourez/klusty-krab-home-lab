@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: samba
+    namespace: roms
+spec:
+    type: LoadBalancer
+    loadBalancerIP: 10.0.0.247 # Choose your reserved MetalLB IP
+    ports:
+        - port: 445
+          protocol: TCP
+          targetPort: 445
+    selector:
+        app: samba

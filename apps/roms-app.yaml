@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: roms
+    namespace: argocd
+spec:
+    project: default
+    source:
+        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+        targetRevision: HEAD
+        path: manifests/roms
+        directory:
+            recurse: true
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: roms
+    syncPolicy:
+        automated:
+            selfHeal: true
+            prune: true
+        syncOptions:
+            - CreateNamespace=true
