@@ -23,6 +23,7 @@ spec:
                       - containerPort: 8384 # Web UI
                       - containerPort: 22000 # Sync
                       - containerPort: 21027 # Local discovery (UDP)
+                        protocol: UDP
                   livenessProbe:
                       httpGet:
                           path: /
