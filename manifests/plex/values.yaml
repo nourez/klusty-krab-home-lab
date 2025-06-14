@@ -7,18 +7,21 @@ persistence:
     config:
         enabled: true
         storageClass: longhorn
+        accessMode: ReadWriteOnce
         size: 5Gi
         # If you want to use hostPath instead of a PVC:
         # existingClaim: ""
         # hostPath: /mnt/plex-config
     media:
         enabled: true
+        accessMode: ReadWriteOnce
         # Use an existing PVC for your media, or use hostPath for direct mount
         # existingClaim: "plex-media-pvc"
         hostPath: /mnt/media
     transcode:
         enabled: true
         storageClass: longhorn
+        accessMode: ReadWriteOnce
         size: 50Gi
 
 service:
@@ -26,9 +29,10 @@ service:
         type: LoadBalancer
         loadBalancerIP: 10.0.0.242
         ports:
-            - port: 32400
-              targetPort: 32400
-              protocol: TCP
+            http:
+                port: 32400
+                targetPort: 32400
+                protocol: TCP
 
 resources:
     requests:
