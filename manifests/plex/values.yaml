@@ -49,6 +49,7 @@ podSecurityContext:
 
 # If you want to expose Plex with an Ingress instead, set this to true and configure ingress.hosts
 ingress:
-    enabled: false
+    main:
+        enabled: false
 # Optionally, configure DNS rewrites in AdGuard:
 # plex.home -> 10.0.0.242
