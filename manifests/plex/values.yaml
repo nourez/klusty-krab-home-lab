@@ -49,6 +49,10 @@ podSecurityContext:
         - 44 # typically 'video'
         - 993 # typically 'render'
 
+# Use host networking for proper local IP detection
+hostNetwork: true
+dnsPolicy: ClusterFirstWithHostNet
+
 # If you want to expose Plex with an Ingress instead, set this to true and configure ingress.hosts
 ingress:
     main:
