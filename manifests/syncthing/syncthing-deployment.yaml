@@ -46,7 +46,12 @@ spec:
                   volumeMounts:
                       - name: saves
                         mountPath: /data
+                      - name: config
+                        mountPath: /var/syncthing
             volumes:
                 - name: saves
                   persistentVolumeClaim:
                       claimName: syncthing-pvc
+                - name: config
+                  persistentVolumeClaim:
+                      claimName: syncthing-config-pvc
