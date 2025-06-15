@@ -6,7 +6,7 @@ metadata:
 spec:
     project: default
     source:
-        repoURL: https://github.com/nourezr/klusty-krab-home-lab.git
+        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
         targetRevision: HEAD
         path: manifests/jellyfin
     destination:
