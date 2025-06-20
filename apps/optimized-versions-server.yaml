@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: optimized-versions-server
+    namespace: argocd
+spec:
+    project: default
+    source:
+        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+        targetRevision: HEAD
+        path: manifests/optimized-versions-server
+        directory:
+            recurse: true
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: optimized-versions-server
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
+            allowEmpty: false
+        syncOptions:
+            - CreateNamespace=true
+            - PrunePropagationPolicy=foreground
+            - PruneLast=true
+        retry:
+            limit: 5
+            backoff:
+                duration: 5s
+                factor: 2
+                maxDuration: 3m
+    revisionHistoryLimit: 3

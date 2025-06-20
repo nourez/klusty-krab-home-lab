@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: optimized-versions-server-cache
+    namespace: optimized-versions-server
+    labels:
+        app: optimized-versions-server
+        component: transcoding-server
+spec:
+    accessModes:
+        - ReadWriteOnce
+    resources:
+        requests:
+            storage: 50Gi
+    storageClassName: "longhorn"

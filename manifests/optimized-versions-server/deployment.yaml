@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: optimized-versions-server
+    namespace: optimized-versions-server
+    labels:
+        app: optimized-versions-server
+        component: transcoding-server
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: optimized-versions-server
+    template:
+        metadata:
+            labels:
+                app: optimized-versions-server
+                component: transcoding-server
+        spec:
+            containers:
+                - name: optimized-versions-server
+                  image: fredrikburmester/streamyfin-optimized-versions-server:master
+                  ports:
+                      - containerPort: 3000
+                        name: http
+                        protocol: TCP
+                  env:
+                      - name: NODE_ENV
+                        value: "development"
+                      - name: JELLYFIN_URL
+                        value: "https://jellyfin.nourez.dev"
+                      - name: MAX_CONCURRENT_JOBS
+                        value: "1"
+                      - name: TIME_TO_KEEP_FILES
+                        value: "8" # Hours
+                  volumeMounts:
+                      - name: cache
+                        mountPath: /usr/src/app/cache
+                  resources:
+                      requests:
+                          memory: "512Mi"
+                          cpu: "250m"
+                      limits:
+                          memory: "2Gi"
+                          cpu: "1000m"
+                  livenessProbe:
+                      httpGet:
+                          path: /
+                          port: 3000
+                      initialDelaySeconds: 30
+                      periodSeconds: 30
+                  readinessProbe:
+                      httpGet:
+                          path: /
+                          port: 3000
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+            volumes:
+                - name: cache
+                  persistentVolumeClaim:
+                      claimName: optimized-versions-server-cache
+            restartPolicy: Always

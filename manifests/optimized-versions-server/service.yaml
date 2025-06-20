@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: optimized-versions-server
+    namespace: optimized-versions-server
+    labels:
+        app: optimized-versions-server
+        component: transcoding-server
+spec:
+    selector:
+        app: optimized-versions-server
+    ports:
+        - name: http
+          port: 3000
+          targetPort: 3000
+          protocol: TCP
+    type: LoadBalancer
+    loadBalancerIP: 10.0.0.243
