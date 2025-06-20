@@ -4,3 +4,5 @@ metadata:
     name: optimized-versions-server
     labels:
         name: optimized-versions-server
+        app: optimized-versions-server
+        component: transcoding-server

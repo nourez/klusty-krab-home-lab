@@ -31,8 +31,6 @@ spec:
                         value: "https://jellyfin.nourez.dev"
                       - name: MAX_CONCURRENT_JOBS
                         value: "1"
-                      - name: TIME_TO_KEEP_FILES
-                        value: "8" # Hours
                   volumeMounts:
                       - name: cache
                         mountPath: /usr/src/app/cache

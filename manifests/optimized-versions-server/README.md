@@ -1,6 +1,6 @@
 # Optimized Versions Server
 
-This directory contains the Kubernetes manifests for the [Optimized Versions Server](https://github.com/streamyfin/optimized-versions-server), a companion server for Streamyfin that enables better video downloads by transcoding HLS streams into single video files.
+This directory contains the standard Kubernetes manifests for the [Optimized Versions Server](https://github.com/streamyfin/optimized-versions-server), a companion server for Streamyfin that enables better video downloads by transcoding HLS streams into single video files.
 
 ## Components
 
