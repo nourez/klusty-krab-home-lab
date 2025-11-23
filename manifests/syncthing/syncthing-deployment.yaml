@@ -52,6 +52,8 @@ spec:
               mountPath: /Dolphin
             - name: cemu-saves
               mountPath: /Cemu
+            - name: eden-saves
+              mountPath: /Eden
       volumes:
         - name: saves
           persistentVolumeClaim:
@@ -65,3 +67,6 @@ spec:
         - name: cemu-saves
           persistentVolumeClaim:
             claimName: syncthing-cemu-pvc
+        - name: eden-saves
+          persistentVolumeClaim:
+            claimName: syncthing-eden-pvc
