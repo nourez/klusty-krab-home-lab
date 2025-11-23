@@ -1,57 +1,62 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: syncthing
-    namespace: syncthing
+  name: syncthing
+  namespace: syncthing
 spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: syncthing
-    template:
-        metadata:
-            labels:
-                app: syncthing
-        spec:
-            containers:
-                - name: syncthing
-                  image: syncthing/syncthing:1.29
-                  env:
-                      - name: TZ
-                        value: America/Toronto
-                  ports:
-                      - containerPort: 8384 # Web UI
-                      - containerPort: 22000 # Sync
-                      - containerPort: 21027 # Local discovery (UDP)
-                        protocol: UDP
-                  livenessProbe:
-                      httpGet:
-                          path: /
-                          port: 8384
-                      initialDelaySeconds: 10
-                      periodSeconds: 10
-                  readinessProbe:
-                      httpGet:
-                          path: /
-                          port: 8384
-                      initialDelaySeconds: 5
-                      periodSeconds: 5
-                  resources:
-                      requests:
-                          memory: "128Mi"
-                          cpu: "100m"
-                      limits:
-                          memory: "512Mi"
-                          cpu: "500m"
-                  volumeMounts:
-                      - name: saves
-                        mountPath: /data
-                      - name: config
-                        mountPath: /var/syncthing
-            volumes:
-                - name: saves
-                  persistentVolumeClaim:
-                      claimName: syncthing-pvc
-                - name: config
-                  persistentVolumeClaim:
-                      claimName: syncthing-config-pvc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syncthing
+  template:
+    metadata:
+      labels:
+        app: syncthing
+    spec:
+      containers:
+        - name: syncthing
+          image: syncthing/syncthing:1.29
+          env:
+            - name: TZ
+              value: America/Toronto
+          ports:
+            - containerPort: 8384 # Web UI
+            - containerPort: 22000 # Sync
+            - containerPort: 21027 # Local discovery (UDP)
+              protocol: UDP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8384
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8384
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: saves
+              mountPath: /data
+            - name: config
+              mountPath: /var/syncthing
+            - name: dolphin-saves
+              mountPath: /Dolphin
+      volumes:
+        - name: saves
+          persistentVolumeClaim:
+            claimName: syncthing-pvc
+        - name: config
+          persistentVolumeClaim:
+            claimName: syncthing-config-pvc
+        - name: dolphin-saves
+          persistentVolumeClaim:
+            claimName: syncthing-dolphin-pvc
