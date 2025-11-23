@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: syncthing
-          image: syncthing/syncthing:1.29
+          image: syncthing/syncthing:2.0.11
           env:
             - name: TZ
               value: America/Toronto
