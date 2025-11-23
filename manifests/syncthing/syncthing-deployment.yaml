@@ -50,6 +50,8 @@ spec:
               mountPath: /var/syncthing
             - name: dolphin-saves
               mountPath: /Dolphin
+            - name: cemu-saves
+              mountPath: /Cemu
       volumes:
         - name: saves
           persistentVolumeClaim:
@@ -60,3 +62,6 @@ spec:
         - name: dolphin-saves
           persistentVolumeClaim:
             claimName: syncthing-dolphin-pvc
+        - name: cemu-saves
+          persistentVolumeClaim:
+            claimName: syncthing-cemu-pvc
