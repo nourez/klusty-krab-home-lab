@@ -1,5 +1,7 @@
 env:
     TZ: "America/Toronto"
+    PUID: "1000"
+    PGID: "1000"
     # Uncomment and fill if you need to claim the server
     # PLEX_CLAIM: "claim-xxxxxxx"
 
@@ -24,6 +26,12 @@ persistence:
         storageClass: longhorn
         accessMode: ReadWriteOnce
         size: 50Gi
+        
+    dev-dri:
+            enabled: true
+            type: hostPath
+            hostPath: /dev/dri
+            mountPath: /dev/dri
 
 # Service not needed with hostNetwork: true - pod binds directly to node port 32400
 # service:
@@ -60,3 +68,6 @@ ingress:
         enabled: false
 # Optionally, configure DNS rewrites in AdGuard:
 # plex.home -> 10.0.0.242
+
+nodeSelector:
+    intel.feature.node.kubernetes.io/gpu: "true"
