@@ -15,8 +15,15 @@ spec:
     spec:
       containers:
         - name: calibre-web
-          image: lscr.io/linuxserver/calibre-web:latest
+          image: lscr.io/linuxserver/calibre-web:0.6.26-ls381
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           ports:
             - name: http
               containerPort: 8083
