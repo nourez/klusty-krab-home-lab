@@ -23,18 +23,6 @@ spec:
           env:
             - name: TZ
               value: America/Toronto
-          livenessProbe:
-            httpGet:
-              path: /healthcheck
-              port: 13378
-            initialDelaySeconds: 15
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /healthcheck
-              port: 13378
-            initialDelaySeconds: 5
-            periodSeconds: 5
           resources:
             requests:
               memory: "256Mi"
