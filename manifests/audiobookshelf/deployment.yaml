@@ -23,8 +23,6 @@ spec:
           env:
             - name: TZ
               value: America/Toronto
-            - name: ROUTER_BASE_PATH
-              value: /
           resources:
             requests:
               memory: "256Mi"
