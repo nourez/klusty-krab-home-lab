@@ -39,7 +39,6 @@ spec:
               mountPath: /config
             - name: calibre-library
               mountPath: /calibre-library
-              readOnly: true
             - name: cwa-book-ingest
               mountPath: /cwa-book-ingest
 
