@@ -19,6 +19,9 @@ spec:
         - name: sync
           image: ghcr.io/drallgood/audiobookshelf-hardcover-sync:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            - name: web-ui
+              containerPort: 8080
           env:
             - name: AUDIOBOOKSHELF_URL
               valueFrom:
