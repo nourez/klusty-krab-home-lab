@@ -43,6 +43,8 @@ spec:
                 configMapKeyRef:
                   name: sync-config
                   key: SYNC_INTERVAL
+            - name: ENABLE_WEB_UI
+              value: "true"
           resources:
             requests:
               memory: "128Mi"
