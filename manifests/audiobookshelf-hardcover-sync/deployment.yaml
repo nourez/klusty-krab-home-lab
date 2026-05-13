@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: sync
-          image: drallgood/audiobookshelf-hardcover-sync:latest
+          image: ghcr.io/drallgood/audiobookshelf-hardcover-sync:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: ABSHELF_URL
