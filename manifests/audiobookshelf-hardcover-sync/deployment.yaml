@@ -20,31 +20,21 @@ spec:
           image: ghcr.io/drallgood/audiobookshelf-hardcover-sync:latest
           imagePullPolicy: IfNotPresent
           env:
-            - name: ABSHELF_URL
+            - name: AUDIOBOOKSHELF_URL
               valueFrom:
                 configMapKeyRef:
                   name: sync-config
-                  key: ABSHELF_URL
-            - name: ABSHELF_USERNAME
+                  key: AUDIOBOOKSHELF_URL
+            - name: AUDIOBOOKSHELF_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: sync-secrets
-                  key: ABSHELF_USERNAME
-            - name: ABSHELF_PASSWORD
+                  key: AUDIOBOOKSHELF_TOKEN
+            - name: HARDCOVER_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: sync-secrets
-                  key: ABSHELF_PASSWORD
-            - name: HARDCOVER_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: sync-secrets
-                  key: HARDCOVER_API_KEY
-            - name: HARDCOVER_USER_ID
-              valueFrom:
-                configMapKeyRef:
-                  name: sync-config
-                  key: HARDCOVER_USER_ID
+                  key: HARDCOVER_TOKEN
             - name: SYNC_INTERVAL
               valueFrom:
                 configMapKeyRef:

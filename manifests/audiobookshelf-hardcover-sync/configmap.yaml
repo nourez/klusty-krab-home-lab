@@ -5,8 +5,6 @@ metadata:
   namespace: audiobookshelf-hardcover-sync
 data:
   # AudioBookShelf service address (in-cluster DNS)
-  ABSHELF_URL: "http://audiobookshelf.audiobookshelf"
-  # Your Hardcover user ID
-  HARDCOVER_USER_ID: "phazed09"
+  AUDIOBOOKSHELF_URL: "http://audiobookshelf.audiobookshelf"
   # Sync interval in minutes (default 60)
   SYNC_INTERVAL: "60"
