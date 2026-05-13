@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audiobookshelf-hardcover-sync
+  namespace: audiobookshelf-hardcover-sync
+  labels:
+    app: audiobookshelf-hardcover-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audiobookshelf-hardcover-sync
+  template:
+    metadata:
+      labels:
+        app: audiobookshelf-hardcover-sync
+    spec:
+      containers:
+        - name: sync
+          image: drallgood/audiobookshelf-hardcover-sync:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ABSHELF_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sync-config
+                  key: ABSHELF_URL
+            - name: ABSHELF_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sync-secrets
+                  key: ABSHELF_USERNAME
+            - name: ABSHELF_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sync-secrets
+                  key: ABSHELF_PASSWORD
+            - name: HARDCOVER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sync-secrets
+                  key: HARDCOVER_API_KEY
+            - name: HARDCOVER_USER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: sync-config
+                  key: HARDCOVER_USER_ID
+            - name: SYNC_INTERVAL
+              valueFrom:
+                configMapKeyRef:
+                  name: sync-config
+                  key: SYNC_INTERVAL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Always

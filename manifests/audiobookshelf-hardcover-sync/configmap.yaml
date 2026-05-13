@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sync-config
+  namespace: audiobookshelf-hardcover-sync
+data:
+  # AudioBookShelf service address (in-cluster DNS)
+  ABSHELF_URL: "http://audiobookshelf.audiobookshelf"
+  # Your Hardcover user ID
+  HARDCOVER_USER_ID: "phazed09"
+  # Sync interval in minutes (default 60)
+  SYNC_INTERVAL: "60"
