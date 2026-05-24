@@ -1,0 +1,151 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mariadb
+  namespace: grimmory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+        - name: mariadb
+          image: lscr.io/linuxserver/mariadb:11.4.5
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: America/Toronto
+            - name: MYSQL_DATABASE
+              value: grimmory
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db-secrets
+                  key: DB_USER
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db-secrets
+                  key: DB_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db-secrets
+                  key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: mariadb-config
+              mountPath: /config
+          readinessProbe:
+            exec:
+              command: ["mariadb-admin", "ping", "-h", "127.0.0.1"]
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["mariadb-admin", "ping", "-h", "127.0.0.1"]
+            initialDelaySeconds: 45
+            periodSeconds: 20
+      volumes:
+        - name: mariadb-config
+          hostPath:
+            path: /Grimmory/mariadb/config
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb
+  namespace: grimmory
+spec:
+  type: ClusterIP
+  selector:
+    app: mariadb
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grimmory
+  namespace: grimmory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grimmory
+  template:
+    metadata:
+      labels:
+        app: grimmory
+    spec:
+      containers:
+        - name: grimmory
+          image: grimmory/grimmory:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 6060
+          env:
+            - name: USER_ID
+              value: "1000"
+            - name: GROUP_ID
+              value: "1000"
+            - name: TZ
+              value: America/Toronto
+            - name: BOOKLORE_PORT
+              value: "6060"
+            - name: DATABASE_URL
+              value: jdbc:mariadb://mariadb:3306/grimmory
+            - name: DATABASE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db-secrets
+                  key: DB_USER
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grimmory-db-secrets
+                  key: DB_PASSWORD
+          volumeMounts:
+            - name: grimmory-data
+              mountPath: /app/data
+            - name: grimmory-books
+              mountPath: /books
+            - name: grimmory-bookdrop
+              mountPath: /bookdrop
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 20
+      volumes:
+        - name: grimmory-data
+          hostPath:
+            path: /Grimmory/data
+            type: DirectoryOrCreate
+        - name: grimmory-books
+          hostPath:
+            path: /Grimmory/books
+            type: DirectoryOrCreate
+        - name: grimmory-bookdrop
+          hostPath:
+            path: /Grimmory/bookdrop
+            type: DirectoryOrCreate

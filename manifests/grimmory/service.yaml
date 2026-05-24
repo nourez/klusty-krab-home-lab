@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grimmory
+  namespace: grimmory
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.0.246
+  selector:
+    app: grimmory
+  ports:
+    - name: http
+      port: 6060
+      targetPort: 6060
