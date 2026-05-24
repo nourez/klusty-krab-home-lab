@@ -13,6 +13,8 @@ spec:
       labels:
         app: grimmory
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: klusty-krab-node-1
       initContainers:
         - name: wait-for-mariadb
           image: busybox:1.36
@@ -70,13 +72,13 @@ spec:
       volumes:
         - name: grimmory-data
           hostPath:
-            path: /Grimmory/data
+            path: /mnt/media/Grimmory/data
             type: DirectoryOrCreate
         - name: grimmory-books
           hostPath:
-            path: /Grimmory/books
+            path: /mnt/media/Grimmory/books
             type: DirectoryOrCreate
         - name: grimmory-bookdrop
           hostPath:
-            path: /Grimmory/bookdrop
+            path: /mnt/media/Grimmory/bookdrop
             type: DirectoryOrCreate
