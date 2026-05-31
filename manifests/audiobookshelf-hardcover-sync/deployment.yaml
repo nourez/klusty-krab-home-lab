@@ -33,16 +33,6 @@ spec:
                 secretKeyRef:
                   name: sync-secrets
                   key: AUDIOBOOKSHELF_TOKEN
-            - name: HARDCOVER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: sync-secrets
-                  key: HARDCOVER_TOKEN
-            - name: SYNC_INTERVAL
-              valueFrom:
-                configMapKeyRef:
-                  name: sync-config
-                  key: SYNC_INTERVAL
             - name: ENABLE_WEB_UI
               value: "true"
           resources:
