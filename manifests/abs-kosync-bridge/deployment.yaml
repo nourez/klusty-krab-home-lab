@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: abs-kosync-bridge
+  namespace: abs-kosync-bridge
+  labels:
+    app: abs-kosync-bridge
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: abs-kosync-bridge
+  template:
+    metadata:
+      labels:
+        app: abs-kosync-bridge
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: klusty-krab-node-1
+      containers:
+        - name: abs-kosync-bridge
+          image: ghcr.io/cporcellijr/abs-kosync-bridge:v6.7.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5757
+          env:
+            - name: TZ
+              value: America/Toronto
+            - name: LOG_LEVEL
+              value: INFO
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 20
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: books
+              mountPath: /books
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: abs-kosync-bridge-data
+        - name: books
+          hostPath:
+            path: /mnt/media/Books
+            type: Directory

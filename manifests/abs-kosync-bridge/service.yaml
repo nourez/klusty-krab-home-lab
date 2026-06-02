@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: abs-kosync-bridge
+  namespace: abs-kosync-bridge
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.0.237
+  selector:
+    app: abs-kosync-bridge
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5757
