@@ -1,0 +1,14 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: abs-kosync-bridge
+  namespace: abs-kosync-bridge
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`abs-kosync.home`)
+      kind: Rule
+      services:
+        - name: abs-kosync-bridge
+          port: 80
