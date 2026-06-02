@@ -19,7 +19,7 @@ spec:
         kubernetes.io/hostname: klusty-krab-node-1
       containers:
         - name: abs-kosync-bridge
-          image: ghcr.io/cporcellijr/abs-kosync-bridge:v6.7.0
+          image: ghcr.io/cporcellijr/abs-kosync-bridge:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
