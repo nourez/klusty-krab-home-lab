@@ -9,29 +9,22 @@ echo "========================================="
 
 # Backup current configuration from the running pod
 echo "📥 Backing up current configuration..."
-kubectl exec -n adguard adguard-deployment-5cd46f5dd5-nv7c2 -- cat /opt/adguardhome/conf/AdGuardHome.yaml > adguard-backup-config.yaml
+POD=$(kubectl get pods -n adguard -l app.kubernetes.io/name=adguard -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n adguard "$POD" -- cat /opt/adguardhome/conf/AdGuardHome.yaml > adguard-backup-config.yaml
 
 echo "✅ Configuration backed up to: adguard-backup-config.yaml"
 echo ""
 
-# Create the new config PVC
-echo "🔧 Creating configuration PVC..."
-kubectl apply -f manifests/adguard/adguard-config-pvc.yaml
-
-# Wait for PVC to be bound
+# Wait for PVC to be bound (created by Helm chart)
 echo "⏳ Waiting for PVC to be ready..."
 kubectl wait --for=condition=Bound pvc/adguard-config-pvc -n adguard --timeout=60s
 
-# Apply the updated deployment
-echo "🚀 Updating AdGuard deployment..."
-kubectl apply -f manifests/adguard/adguard-deployment.yaml
-
-# Wait for rollout
+# Wait for deployment rollout (managed by Argo CD / Helm)
 echo "⏳ Waiting for deployment rollout..."
-kubectl rollout status deployment/adguard-deployment -n adguard --timeout=120s
+kubectl rollout status deployment/adguard -n adguard --timeout=120s
 
 # Get new pod name
-NEW_POD=$(kubectl get pods -n adguard -l app=adguard -o jsonpath='{.items[0].metadata.name}')
+NEW_POD=$(kubectl get pods -n adguard -l app.kubernetes.io/name=adguard -o jsonpath='{.items[0].metadata.name}')
 
 # Restore configuration
 echo "📤 Restoring configuration to new pod..."
@@ -43,7 +36,7 @@ kubectl delete pod -n adguard $NEW_POD
 
 # Wait for new pod
 echo "⏳ Waiting for AdGuard to come back online..."
-kubectl wait --for=condition=ready pod -l app=adguard -n adguard --timeout=120s
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=adguard -n adguard --timeout=120s
 
 echo ""
 echo "✅ AdGuard configuration fix complete!"

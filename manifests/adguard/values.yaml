@@ -1,0 +1,52 @@
+controllers:
+  main:
+    strategy: Recreate
+    containers:
+      main:
+        image:
+          repository: adguard/adguardhome
+          tag: latest
+          pullPolicy: Always
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+service:
+  main:
+    controller: main
+    type: LoadBalancer
+    loadBalancerIP: 10.0.0.241
+    ports:
+      http-initial:
+        port: 3000
+        protocol: TCP
+      http:
+        port: 80
+        protocol: TCP
+      dns:
+        port: 53
+        protocol: UDP
+
+persistence:
+  config:
+    enabled: true
+    nameOverride: config-pvc
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    retain: true
+    globalMounts:
+      - path: /opt/adguardhome/conf
+  data:
+    enabled: true
+    nameOverride: pvc
+    storageClass: longhorn
+    accessMode: ReadWriteOnce
+    size: 5Gi
+    retain: true
+    globalMounts:
+      - path: /opt/adguardhome/work
