@@ -5,10 +5,16 @@ metadata:
   namespace: argocd
 spec:
   project: default
-  source:
-    repoURL: https://github.com/nourez/klusty-krab-home-lab
-    targetRevision: HEAD
-    path: manifests/cloudflared
+  sources:
+    - repoURL: https://cloudflare.github.io/helm-charts
+      chart: cloudflare-tunnel-remote
+      targetRevision: 0.1.2
+      helm:
+        valueFiles:
+          - $values/manifests/cloudflared/values.yaml
+    - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+      targetRevision: HEAD
+      ref: values
   destination:
     server: https://kubernetes.default.svc
     namespace: cloudflared
@@ -17,4 +23,11 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-    - CreateNamespace=true
+      - CreateNamespace=true
+  ignoreDifferences:
+    # Preserve the externally managed tunnel token secret.
+    - kind: Secret
+      name: cloudflared
+      jsonPointers:
+        - /data
+        - /stringData
