@@ -1,0 +1,65 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-3.7.3/charts/other/app-template/values.schema.json
+
+defaultPodOptions:
+    hostNetwork: true
+    dnsPolicy: ClusterFirstWithHostNet
+
+controllers:
+    main:
+        strategy: Recreate
+        containers:
+            main:
+                image:
+                    repository: homebridge/homebridge
+                    tag: "2025-06-10"
+                env:
+                    PGID: "1000"
+                    PUID: "1000"
+                    HOMEBRIDGE_CONFIG_UI: "1"
+                    HOMEBRIDGE_CONFIG_UI_PORT: "8581"
+                resources:
+                    requests:
+                        memory: 256Mi
+                        cpu: 100m
+                    limits:
+                        memory: 512Mi
+                        cpu: 500m
+                probes:
+                    liveness:
+                        enabled: true
+                        custom: true
+                        spec:
+                            httpGet:
+                                path: /
+                                port: 8581
+                            initialDelaySeconds: 30
+                            periodSeconds: 30
+                    readiness:
+                        enabled: true
+                        custom: true
+                        spec:
+                            httpGet:
+                                path: /
+                                port: 8581
+                            initialDelaySeconds: 5
+                            periodSeconds: 10
+
+service:
+    main:
+        controller: main
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.248
+        ports:
+            http:
+                port: 80
+                targetPort: 8581
+                protocol: TCP
+
+persistence:
+    config:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: longhorn
+        globalMounts:
+            - path: /homebridge
