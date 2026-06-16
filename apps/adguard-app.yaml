@@ -12,11 +12,15 @@ spec:
             - CreateNamespace=true
     project: default
     sources:
+        - repoURL: ghcr.io/bjw-s/helm
+          chart: app-template
+          targetRevision: 3.7.3
+          helm:
+              valueFiles:
+                  - $values/manifests/adguard/values.yaml
         - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
           targetRevision: HEAD
-          path: manifests/adguard
-          directory:
-              recurse: true
+          ref: values
     destination:
         server: https://kubernetes.default.svc
         namespace: adguard
