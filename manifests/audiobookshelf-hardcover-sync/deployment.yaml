@@ -28,11 +28,6 @@ spec:
                 configMapKeyRef:
                   name: sync-config
                   key: AUDIOBOOKSHELF_URL
-            - name: AUDIOBOOKSHELF_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: sync-secrets
-                  key: AUDIOBOOKSHELF_TOKEN
             - name: ENABLE_WEB_UI
               value: "true"
           resources:
