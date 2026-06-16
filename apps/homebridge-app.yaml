@@ -5,12 +5,16 @@ metadata:
     namespace: argocd
 spec:
     project: default
-    source:
-        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
-        targetRevision: HEAD
-        path: manifests/homebridge
-        directory:
-            recurse: true
+    sources:
+        - repoURL: ghcr.io/bjw-s/helm/app-template
+          chart: app-template
+          targetRevision: 3.7.3
+          helm:
+              valueFiles:
+                  - $values/manifests/homebridge/values.yaml
+        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+          targetRevision: HEAD
+          ref: values
     destination:
         server: https://kubernetes.default.svc
         namespace: homebridge
