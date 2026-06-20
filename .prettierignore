@@ -1,5 +1,10 @@
 .git
 .cursor
 node_modules
+.pnpm-store
+dist
+build
+coverage
+.svelte-kit
 apps-archive
 system-changes.log
