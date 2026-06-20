@@ -1,0 +1,5 @@
+.git
+.cursor
+node_modules
+apps-archive
+system-changes.log
