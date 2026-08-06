@@ -23,6 +23,11 @@ spec:
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2026.8.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
           ports:
             - name: http
               containerPort: 8123
@@ -40,6 +45,9 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: dbus
+              mountPath: /run/dbus
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /
@@ -56,3 +64,7 @@ spec:
         - name: config
           persistentVolumeClaim:
             claimName: homeassistant-config
+        - name: dbus
+          hostPath:
+            path: /run/dbus
+            type: Directory
