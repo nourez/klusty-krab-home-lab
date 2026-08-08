@@ -64,3 +64,68 @@ Optional GPU test (on cluster, not in Argo apps): see `test-jellyfin/README.md` 
 - `apps/` — Argo CD Applications (app-of-apps: `root-app.yaml`)
 - `manifests/<service>/` — Per-service Kubernetes manifests
 - `test-jellyfin/` — Standalone Jellyfin + Intel QSV experiment
+
+## Home Assistant
+
+GitOps covers the **k8s shell only** (`apps/homeassistant-app.yaml`, `manifests/homeassistant/`). All HA YAML, HACS, entity registry edits, and integrations live on the Longhorn PVC `homeassistant-config` at `/config` — **not in this repo**. Expect to `kubectl exec` / scale the deployment when changing live config.
+
+### Cluster facts
+
+| Item | Value |
+|------|--------|
+| Namespace / deploy | `homeassistant` / `homeassistant` |
+| Image | `ghcr.io/home-assistant/home-assistant:2026.8.0` (bump tag in `deployment.yaml` to upgrade) |
+| UI | MetalLB `http://10.0.0.249` (Service `80 → 8123`); also node `:8123` via `hostNetwork` |
+| Strategy | `Recreate` (single replica + hostNetwork) |
+| Networking | `hostNetwork: true` + `dnsPolicy: ClusterFirstWithHostNet` (discovery / HomeKit / Cast) |
+| Bluetooth | Host `/run/dbus` mounted; `NET_ADMIN`/`NET_RAW`; `appArmorProfile: Unconfined`. Node needs `bluez` / `bluetooth.service` running |
+| Access model | LAN + HomeKit Bridge (Apple home hub). Do **not** Cloudflare-tunnel HA unless explicitly requested |
+
+### Known pitfalls
+
+- **Pending pod / host port clash:** LoadBalancer must stay `port: 80` → `targetPort: 8123`. Publishing Service port `8123` makes k3s ServiceLB claim host `8123`, so the hostNetwork pod cannot schedule (same pattern as Homebridge).
+- **Argo self-heal:** Live `kubectl apply` on git-managed manifests gets reverted. Change git (or only mutate `/config` on the PVC).
+- **Config vs git:** Packages, `configuration.yaml`, `.storage/*`, `custom_components/` are on the PVC. Back them up before risky edits.
+
+### Safe PVC / registry edits
+
+Entity registry and restore-state edits need HA stopped so it does not overwrite files:
+
+```bash
+kubectl -n homeassistant scale deployment/homeassistant --replicas=0
+kubectl -n homeassistant wait --for=delete pod -l app=homeassistant --timeout=120s
+# edit via a short-lived pod mounting PVC homeassistant-config at /config, or after scale-up via exec
+kubectl -n homeassistant scale deployment/homeassistant --replicas=1
+kubectl -n homeassistant rollout status deployment/homeassistant --timeout=180s
+```
+
+Key paths on the PVC:
+
+- `/config/configuration.yaml` — includes `homeassistant.packages: !include_dir_named packages`
+- `/config/packages/unified_sony_tvs.yaml` — unified Sony BRAVIA media players
+- `/config/custom_components/` — HACS + `template_media_player` (`EuleMitKeule/template-media-player`)
+- `/config/.storage/core.entity_registry` — hide/disable entities (`hidden_by: user`)
+- `/config/.storage/core.restore_state` — remove orphan entity IDs so they do not return after restart
+
+Recorder DB history (`home-assistant_v2.db` / `states_meta`) can still list old `entity_id`s; that does **not** mean they are live. Prefer registry + restore_state over deleting DB rows.
+
+### Unified TVs (current design)
+
+Sony BRAVIA sets expose both **Cast** and **Android TV Remote**. A HACS custom component **`template_media_player`** merges them:
+
+| Unified entity | Area | Cast (metadata / browse) | Android TV Remote (power / volume) |
+|----------------|------|--------------------------|-------------------------------------|
+| `media_player.living_room_bravia` (“Living Room TV”) | `living_room` | `media_player.living_room_tv` | `media_player.living_room_tv_2` |
+| `media_player.nourez_s_bedroom_bravia` (“Nourez's Bedroom TV”) | `bedroom` | `media_player.nourezs_tv` | `media_player.nourezs_tv_2` |
+
+Backing Cast / Android TV / `remote.*` entities are `hidden_by: user`. Volume uses step up/down (no `volume_set` on Android TV Remote); power uses on/off buttons (`assumed_state`).
+
+Also hidden for now: `media_player.basement_tv` (unused; may be disconnected later).
+
+After renames, **orphan** `entity_id`s (e.g. old `media_player.sony_tv`) can linger in restore_state and show under Media → **Other media players**. Remove them from `core.restore_state` with HA scaled to 0, then restart.
+
+### HACS / upgrades
+
+- HACS install (in pod): `wget -O - https://get.hacs.xyz | bash -` into `/config/custom_components/hacs`, then restart HA; finish GitHub OAuth in UI.
+- Image upgrades: change the tag in `manifests/homeassistant/deployment.yaml`, PR/merge, let Argo sync. PVC `/config` persists across upgrades.
+- Prefer validating package YAML with HA stopped or via `exec` + config check; avoid committing secrets from `/config` into git.
