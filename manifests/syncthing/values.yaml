@@ -1,0 +1,98 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s-labs/helm-charts/app-template-5.0.1/charts/other/app-template/values.schema.json
+
+controllers:
+  main:
+    containers:
+      main:
+        image:
+          repository: syncthing/syncthing
+          tag: "2.0.11"
+          pullPolicy: IfNotPresent
+        env:
+          TZ: America/Toronto
+        ports:
+          - containerPort: 8384
+            name: web
+            protocol: TCP
+          - containerPort: 22000
+            name: sync
+            protocol: TCP
+          - containerPort: 21027
+            name: discovery
+            protocol: UDP
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /
+            port: web
+            spec:
+              initialDelaySeconds: 10
+              periodSeconds: 10
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /
+            port: web
+            spec:
+              initialDelaySeconds: 5
+              periodSeconds: 5
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+
+service:
+  main:
+    controller: main
+    type: LoadBalancer
+    loadBalancerIP: 10.0.0.245
+    ports:
+      web:
+        port: 80
+        targetPort: 8384
+        protocol: TCP
+      sync:
+        port: 22000
+        targetPort: 22000
+        protocol: TCP
+      discovery:
+        port: 21027
+        targetPort: 21027
+        protocol: UDP
+
+persistence:
+  config:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: syncthing-config-pvc
+    globalMounts:
+      - path: /var/syncthing
+  saves:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: syncthing-pvc
+    globalMounts:
+      - path: /data
+  dolphin-saves:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: syncthing-dolphin-pvc
+    globalMounts:
+      - path: /Dolphin
+  cemu-saves:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: syncthing-cemu-pvc
+    globalMounts:
+      - path: /Cemu
+  eden-saves:
+    enabled: true
+    type: persistentVolumeClaim
+    existingClaim: syncthing-eden-pvc
+    globalMounts:
+      - path: /Eden
