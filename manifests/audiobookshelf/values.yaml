@@ -1,0 +1,44 @@
+controllers:
+    main:
+        strategy: Recreate
+        containers:
+            main:
+                image:
+                    repository: advplyr/audiobookshelf
+                    tag: 2.34.0
+                    pullPolicy: IfNotPresent
+                env:
+                    TZ: America/Toronto
+                resources:
+                    requests:
+                        memory: 256Mi
+                        cpu: 100m
+                    limits:
+                        memory: 1Gi
+                        cpu: 500m
+
+service:
+    main:
+        controller: main
+        type: LoadBalancer
+        loadBalancerIP: 10.0.0.235
+        ports:
+            http:
+                port: 80
+
+persistence:
+    config:
+        type: persistentVolumeClaim
+        existingClaim: audiobookshelf-config
+        globalMounts:
+            - path: /config
+    metadata:
+        type: persistentVolumeClaim
+        existingClaim: audiobookshelf-metadata
+        globalMounts:
+            - path: /metadata
+    audiobooks:
+        type: persistentVolumeClaim
+        existingClaim: audiobookshelf-audiobooks
+        globalMounts:
+            - path: /audiobooks

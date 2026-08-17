@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+    name: audiobookshelf-audiobooks-pv
+spec:
+    capacity:
+        storage: 500Gi
+    accessModes:
+        - ReadWriteMany
+    hostPath:
+        path: /mnt/media/Audiobooks
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: audiobookshelf-audiobooks
+    namespace: audiobookshelf
+spec:
+    storageClassName: ""
+    accessModes:
+        - ReadWriteMany
+    resources:
+        requests:
+            storage: 500Gi
+    volumeName: audiobookshelf-audiobooks-pv
