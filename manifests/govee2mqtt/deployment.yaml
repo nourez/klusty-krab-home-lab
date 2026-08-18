@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: govee2mqtt
+  namespace: govee2mqtt
+  labels:
+    app: govee2mqtt
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: govee2mqtt
+  template:
+    metadata:
+      labels:
+        app: govee2mqtt
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+        - name: wait-for-mosquitto
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z mosquitto.mqtt.svc.cluster.local 1883; do
+                echo waiting for mosquitto
+                sleep 2
+              done
+      containers:
+        - name: govee2mqtt
+          image: ghcr.io/wez/govee2mqtt:latest
+          imagePullPolicy: Always
+          securityContext:
+            capabilities:
+              add:
+                - NET_RAW
+          ports:
+            - name: http
+              containerPort: 8056
+              protocol: TCP
+            - name: lan
+              containerPort: 4002
+              protocol: UDP
+          env:
+            - name: TZ
+              value: America/Toronto
+            - name: GOVEE_TEMPERATURE_SCALE
+              value: "C"
+            - name: GOVEE_MQTT_HOST
+              value: mosquitto.mqtt.svc.cluster.local
+            - name: GOVEE_MQTT_PORT
+              value: "1883"
+            - name: GOVEE_MQTT_USER
+              value: homeassistant
+            - name: GOVEE_MQTT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: govee2mqtt-secrets
+                  key: mqtt-password
+            - name: GOVEE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: govee2mqtt-secrets
+                  key: govee-email
+                  optional: true
+            - name: GOVEE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: govee2mqtt-secrets
+                  key: govee-password
+                  optional: true
+            - name: GOVEE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: govee2mqtt-secrets
+                  key: govee-api-key
+                  optional: true
+            - name: GOVEE_LAN_BROADCAST_ALL
+              value: "true"
+            - name: RUST_LOG_STYLE
+              value: always
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: govee2mqtt-data
