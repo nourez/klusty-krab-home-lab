@@ -1,6 +1,6 @@
 # Pixoo 64 schedule (HA-managed)
 
-Home Assistant owns face rotation and brightness. The Divoom app schedule is not used.
+Home Assistant owns face rotation. The Divoom app schedule is not used. Brightness is controlled manually (e.g. via lighting dashboards), not by this schedule.
 
 ## Entities
 
@@ -9,10 +9,9 @@ Home Assistant owns face rotation and brightness. The Divoom app schedule is not
 | Override dropdown | `input_select.pixoo_face` |
 | What schedule wants | `sensor.pixoo_scheduled_face` |
 | What is showing (schedule or override) | `sensor.pixoo_active_face` |
-| Night/day brightness target | `sensor.pixoo_scheduled_brightness` |
 | Apply script | `script.pixoo_apply_face` |
 | Pixoo page target | `sensor.nourez_s_bedroom_nourez_s_bedroom_pixoo_64_current_page` |
-| Pixoo brightness | `light.nourez_s_bedroom_nourez_s_bedroom_pixoo_64_light` |
+| Pixoo brightness (manual) | `light.nourez_s_bedroom_nourez_s_bedroom_pixoo_64_light` |
 
 Package on the HA PVC: `/config/packages/pixoo_schedule.yaml`
 
@@ -35,13 +34,6 @@ Package on the HA PVC: `/config/packages/pixoo_schedule.yaml`
 | 09:00–17:00 | Plan 1 |
 | 17:00–23:00 | Cloud Channel |
 | 23:00–06:00 | Big Time |
-
-## Brightness
-
-| Window | Brightness |
-|--------|------------|
-| 23:00–06:00 | 1% |
-| 06:00–23:00 | 100% |
 
 ## Clock IDs
 
@@ -102,11 +94,11 @@ data:
 
 The auto Overview area view cannot take custom Lovelace YAML. Face controls are assigned to the **bedroom** area (and Pixoo device) so they appear on **Nourez's Bedroom** under **Others**:
 
-- Current face (`sensor.pixoo_active_face`) — currently e.g. Valoub Clock
-- Face / override (`input_select.pixoo_face`) — set to Schedule or a specific face
+- Current face (`sensor.pixoo_active_face`)
+- Face / override (`input_select.pixoo_face`)
 - Scheduled face (`sensor.pixoo_scheduled_face`)
 
-`Current Page` from the integration is hidden (unused page index). Brightness remains on **Pixoo 64 Light** in the Lights section (safe to remove from that card once you use schedule brightness).
+`Current Page` from the integration is hidden (unused page index). Use `light.nourez_s_bedroom_nourez_s_bedroom_pixoo_64_light` with your other lighting controls for brightness.
 
 Optional entities card for a custom dashboard:
 
@@ -121,8 +113,6 @@ entities:
     name: Face / override
   - entity: sensor.pixoo_scheduled_face
     name: Scheduled face
-  - entity: light.nourez_s_bedroom_nourez_s_bedroom_pixoo_64_light
-    name: Brightness
 ```
 
 ## Notes
