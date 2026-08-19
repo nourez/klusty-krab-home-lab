@@ -63,18 +63,10 @@ spec:
                 secretKeyRef:
                   name: govee2mqtt-secrets
                   key: mqtt-password
-            - name: GOVEE_EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: govee2mqtt-secrets
-                  key: govee-email
-                  optional: true
-            - name: GOVEE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: govee2mqtt-secrets
-                  key: govee-password
-                  optional: true
+            # Do not set GOVEE_EMAIL / GOVEE_PASSWORD until upstream handles
+            # Govee's undocumented login 454/2FA response. With those set,
+            # govee2mqtt crash-loops (wez/govee2mqtt#682). LAN + official
+            # API key still work without account login.
             - name: GOVEE_API_KEY
               valueFrom:
                 secretKeyRef:
