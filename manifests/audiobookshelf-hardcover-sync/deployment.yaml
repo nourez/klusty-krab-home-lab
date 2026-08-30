@@ -7,6 +7,8 @@ metadata:
     app: audiobookshelf-hardcover-sync
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: audiobookshelf-hardcover-sync
@@ -15,9 +17,11 @@ spec:
       labels:
         app: audiobookshelf-hardcover-sync
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: sync
-          image: ghcr.io/drallgood/audiobookshelf-hardcover-sync:latest
+          image: ghcr.io/drallgood/audiobookshelf-hardcover-sync:3.5.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: web-ui
@@ -30,6 +34,8 @@ spec:
                   key: AUDIOBOOKSHELF_URL
             - name: ENABLE_WEB_UI
               value: "true"
+            - name: DATA_DIR
+              value: /app/data
           resources:
             requests:
               memory: "128Mi"
@@ -37,4 +43,11 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: audiobookshelf-hardcover-sync-data
       restartPolicy: Always

@@ -19,7 +19,7 @@ spec:
         kubernetes.io/hostname: klusty-krab-node-1
       containers:
         - name: abs-kosync-bridge
-          image: ghcr.io/cporcellijr/abs-kosync-bridge:latest
+          image: ghcr.io/cporcellijr/bookbridge:v7.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -29,12 +29,14 @@ spec:
               value: America/Toronto
             - name: LOG_LEVEL
               value: INFO
+            - name: AUDIOBOOKS_DIR
+              value: /audiobooks
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "100m"
             limits:
-              memory: "1Gi"
+              memory: "4Gi"
               cpu: "1000m"
           readinessProbe:
             httpGet:
@@ -53,11 +55,17 @@ spec:
               mountPath: /data
             - name: books
               mountPath: /books
+            - name: audiobooks
+              mountPath: /audiobooks
       volumes:
         - name: data
           persistentVolumeClaim:
             claimName: abs-kosync-bridge-data
         - name: books
           hostPath:
-            path: /mnt/media/Books
+            path: /mnt/media/Grimmory/books
+            type: Directory
+        - name: audiobooks
+          hostPath:
+            path: /mnt/media/Audiobooks
             type: Directory
