@@ -47,6 +47,10 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            # HA defaults to /media for local media; map PVC subdir so uploads survive restarts.
+            - name: config
+              mountPath: /media
+              subPath: media
             - name: dbus
               mountPath: /run/dbus
               readOnly: true
