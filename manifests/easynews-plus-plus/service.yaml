@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: easynews-plus-plus
+  namespace: easynews-plus-plus
+spec:
+  type: ClusterIP
+  selector:
+    app: easynews-plus-plus
+  ports:
+    - name: http
+      port: 80
+      targetPort: 1337

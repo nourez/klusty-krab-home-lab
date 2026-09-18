@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: easynews-plus-plus-custom-titles
+  namespace: easynews-plus-plus
+data:
+  custom-titles.json: |
+    {}
