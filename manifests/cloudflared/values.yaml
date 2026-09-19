@@ -1,0 +1,17 @@
+replicaCount: 2
+
+image:
+  repository: cloudflare/cloudflared
+  pullPolicy: IfNotPresent
+  tag: latest
+
+# Tunnel token is managed out-of-band. The chart renders a Secret placeholder;
+# Argo CD ignoreDifferences preserves the live secret after you create it:
+#   kubectl create secret generic cloudflared \
+#     --from-literal=tunnelToken=<token> -n cloudflared
+# When migrating from the previous raw Deployment, copy the value from the
+# tunnel-token secret (key: token) into cloudflared (key: tunnelToken).
+cloudflare:
+  tunnel_token: ""
+
+fullnameOverride: cloudflared
