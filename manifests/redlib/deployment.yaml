@@ -17,9 +17,11 @@ spec:
     spec:
       containers:
         - name: redlib
-          # Pin matches quay.io/redlib/redlib:latest as of 2026-04-24.
-          # Quay has no semver tags; bump this sha when upgrading.
-          image: quay.io/redlib/redlib:sha-a4d36e9
+          # quay.io/redlib/redlib:latest (sha-a4d36e9) exits before it
+          # listens: Reddit rejects that binary's OAuth client, so probes
+          # get connection refused. This digest is an amd64 source build
+          # from 2026-06-28 (docker.io/austozi/redlib:latest).
+          image: docker.io/austozi/redlib@sha256:88e60addae734498e595231a3d3b8d2eef181d6338ece1373d2c89389fe881ff
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -38,15 +40,23 @@ spec:
             limits:
               memory: "512Mi"
               cpu: "500m"
+          # OAuth setup runs before the listener opens. Give it time
+          # before liveness starts counting failures.
+          startupProbe:
+            httpGet:
+              path: /settings
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 18
           readinessProbe:
             httpGet:
               path: /settings
               port: http
-            initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /settings
               port: http
-            initialDelaySeconds: 20
             periodSeconds: 30
+            timeoutSeconds: 3
