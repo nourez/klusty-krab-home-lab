@@ -7,15 +7,32 @@ appservice websocket, so it needs no Kubernetes Service or Ingress.
 
 Before syncing, create the `beeper` namespace and supply your Beeper Matrix
 access token as a Kubernetes Secret. Keep the token out of Git and shell history.
-The token is available in Beeper Desktop under Settings > Help & About or in
-`~/.config/bbctl/config.json` after `bbctl login`. Put only the token in the
-file, with no trailing newline.
+Run `bbctl login` on your computer first. It can use your Beeper Desktop login
+or send a login code by email. The token is then stored as
+`environments.prod.access_token` in bbctl's config file. The default path is
+`~/Library/Application Support/bbctl/config.json` on macOS and
+`~/.config/bbctl/config.json` on Linux. Current Beeper Desktop versions do not
+show this Matrix token in Settings > Help & About; a token from Desktop's
+Developer API is not interchangeable with it.
+
+For macOS, create the Secret without printing the token or writing another
+plaintext copy (requires `jq`):
 
 ```sh
+brew install beeper/tap/bbctl
+bbctl login
 kubectl create namespace beeper
-kubectl -n beeper create secret generic beeper-bridge-manager \
-  --from-file=MATRIX_ACCESS_TOKEN=/path/to/token-file
+set -o pipefail
+jq -erj '.environments.prod.access_token' \
+  "$HOME/Library/Application Support/bbctl/config.json" |
+  kubectl -n beeper create secret generic beeper-bridge-manager \
+    --from-file=MATRIX_ACCESS_TOKEN=/dev/stdin
 ```
+
+On Linux, use `$HOME/.config/bbctl/config.json` in the `jq` command. The token
+usually starts with `syt_` or `bat_`. To confirm the Secret has the expected
+key without printing its value, run
+`kubectl -n beeper describe secret beeper-bridge-manager`.
 
 After Argo CD syncs, check the pod logs:
 
@@ -29,5 +46,6 @@ Longhorn backup process: it contains credentials and session state. The
 bridge-manager image currently uses the upstream `latest` tag because upstream
 does not publish matching versioned container tags.
 
-Sources: [bridge-manager](https://github.com/beeper/bridge-manager),
+Sources: [bridge-manager login](https://github.com/beeper/bridge-manager/blob/main/README.md),
+[bbctl config path](https://github.com/beeper/bridge-manager/blob/main/cmd/bbctl/main.go),
 [container usage](https://github.com/beeper/bridge-manager/blob/main/docker/README.md).
