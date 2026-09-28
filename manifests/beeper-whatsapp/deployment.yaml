@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeper-whatsapp
+  namespace: beeper
+  labels:
+    app: beeper-whatsapp
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: beeper-whatsapp
+  template:
+    metadata:
+      labels:
+        app: beeper-whatsapp
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: bridge-manager
+          image: ghcr.io/beeper/bridge-manager:latest
+          imagePullPolicy: Always
+          args:
+            - sh-whatsapp
+          env:
+            - name: MATRIX_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: beeper-bridge-manager
+                  key: MATRIX_ACCESS_TOKEN
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: beeper-whatsapp-data
