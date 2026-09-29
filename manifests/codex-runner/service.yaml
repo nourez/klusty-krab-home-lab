@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: codex-runner
+  namespace: codex-runner
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.0.239
+  selector:
+    app: codex-runner
+  ports:
+    # Avoid host SSH port 22 when k3s ServiceLB creates its helper pod.
+    - name: ssh
+      port: 2222
+      targetPort: ssh
+      protocol: TCP
