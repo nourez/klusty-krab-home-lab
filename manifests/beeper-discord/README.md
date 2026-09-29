@@ -27,12 +27,23 @@ that a recent DM can send and receive messages through the new bridge before
 removing the old Beeper Cloud Discord connection. Do not keep both connected
 long term because they can create duplicate chats.
 
+The bridge starts with recent DMs, but it can also bridge server channels. In
+the bot's management chat, send `guilds status` to list your Discord servers
+and their IDs, then `guilds bridge <server ID>` to create a Space for that
+server. Channels are added as messages arrive; add `--entire` to create all
+channel rooms immediately. You can also bridge one channel with
+`!discord bridge <channel ID>`. The Discord account must have access to the
+server and channels. Channel message backfill is disabled by default in the
+bridge, so it will not automatically import old channel history.
+
 Removing the old connection removes its Beeper chat rooms and messages. Beeper
-currently imports only limited Discord history (five recent DMs with 50
-messages each, and no channel history), so review anything you need to retain
-before the cutover. Your chats in Discord itself are unaffected.
+Cloud imports only five recent DMs with 50 messages each and no channel history
+when an account is connected. This is separate from bridging live server
+channels with the self-hosted bridge. Review anything you need to retain before
+removing the old connection. Your chats in Discord itself are unaffected.
 
 Sources: [Bridge Manager](https://github.com/beeper/bridge-manager),
 [Discord QR login](https://docs.mau.fi/bridges/go/discord/authentication.html),
+[Discord server and channel bridging](https://docs.mau.fi/bridges/go/discord/bridging-rooms.html),
 [Beeper account removal](https://help.beeper.com/en_US/chat-networks/deleting-a-chat-network-from-beeper),
 [Beeper history import](https://help.beeper.com/history-import).
