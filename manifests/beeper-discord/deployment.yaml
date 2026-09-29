@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeper-discord
+  namespace: beeper
+  labels:
+    app: beeper-discord
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: beeper-discord
+  template:
+    metadata:
+      labels:
+        app: beeper-discord
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: bridge-manager
+          image: ghcr.io/beeper/bridge-manager:latest
+          imagePullPolicy: Always
+          args:
+            - sh-discord
+          env:
+            - name: MATRIX_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: beeper-bridge-manager
+                  key: MATRIX_ACCESS_TOKEN
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: beeper-discord-data
