@@ -1,0 +1,9 @@
+# Ubuntu 24.04 restricts user namespaces for unconfined processes too.
+# Assign this profile only to the runner container; bubblewrap enforces the
+# filesystem/network sandbox within it. Load on the node before pod startup.
+abi <abi/4.0>,
+include <tunables/global>
+
+profile codex-runner flags=(unconfined) {
+  userns,
+}

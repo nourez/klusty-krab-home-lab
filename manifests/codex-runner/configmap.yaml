@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: codex-runner-bootstrap
+  namespace: codex-runner
+data:
+  bootstrap.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+
+    apt-get update
+    apt-get install -y --no-install-recommends \
+      openssh-server ca-certificates curl git gh jq ripgrep \
+      python3 python3-yaml python3-venv yamllint bubblewrap procps tini
+    rm -rf /var/lib/apt/lists/*
+    npm install --global "@openai/codex@${CODEX_VERSION}"
+    npm cache clean --force
+
+    # Match the cluster's Kubernetes minor version and verify the download.
+    arch="$(dpkg --print-architecture)"
+    curl --fail --silent --show-error --location \
+      --retry 3 --output /tmp/kubectl \
+      "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl"
+    curl --fail --silent --show-error --location \
+      --retry 3 --output /tmp/kubectl.sha256 \
+      "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${arch}/kubectl.sha256"
+    (cd /tmp && printf '%s  kubectl\n' "$(cat kubectl.sha256)" \
+      | sha256sum --check)
+    install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+    rm /tmp/kubectl /tmp/kubectl.sha256
+
+    # The upstream Node image provides UID/GID 1000 as node.
+    usermod --login runner --home /home/runner --shell /bin/bash node
+    groupmod --new-name runner node
+    # An impossible password hash permits public-key login without PAM;
+    # useradd's default locked account would also reject public keys.
+    usermod --password '*' runner
+    install -d -m 0750 -o runner -g runner /home/runner
+    install -d -m 0700 -o runner -g runner \
+      /home/runner/.ssh /home/runner/.codex /home/runner/.ssh/host-keys
+    install -d -m 0750 -o runner -g runner /home/runner/projects
+    install -d -m 0755 /run/sshd
+
+    # Keep server identity stable across pod replacements.
+    host_key=/home/runner/.ssh/host-keys/ssh_host_ed25519_key
+    if [ ! -f "$host_key" ]; then
+      ssh-keygen -q -t ed25519 -N '' -f "$host_key"
+    fi
+    chown root:root "$host_key" "$host_key.pub"
+    chmod 0600 "$host_key"
+
+    # Read the rotating service-account token directly from its projected file.
+    # SSH does not inherit container environment variables, so SetEnv below
+    # supplies KUBECONFIG to interactive and noninteractive sessions alike.
+    cat > /etc/codex-runner/kubeconfig <<'KUBECONFIG_FILE'
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: home-lab
+        cluster:
+          server: https://kubernetes.default.svc
+          certificate-authority: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    users:
+      - name: runner
+        user:
+          tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    contexts:
+      - name: home-lab
+        context:
+          cluster: home-lab
+          user: runner
+          namespace: codex-runner
+    current-context: home-lab
+    KUBECONFIG_FILE
+    chmod 0644 /etc/codex-runner/kubeconfig
+
+    # Seed defaults once; authentication and subsequent preferences persist.
+    if [ ! -f /home/runner/.codex/config.toml ]; then
+      install -m 0600 -o runner -g runner \
+        /opt/codex-runner/config.toml /home/runner/.codex/config.toml
+    fi
+
+    /usr/sbin/sshd -t -f /opt/codex-runner/sshd_config
+    echo "Codex Runner ready: SSH user runner, port 2222"
+    exec /usr/bin/tini -- /usr/sbin/sshd -D -e -f /opt/codex-runner/sshd_config
+  sshd_config: |
+    Port 2222
+    HostKey /home/runner/.ssh/host-keys/ssh_host_ed25519_key
+    PidFile /run/sshd.pid
+    PermitRootLogin no
+    AllowUsers runner
+    PubkeyAuthentication yes
+    AuthorizedKeysFile /etc/codex-runner/keys/authorized_keys
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    PermitEmptyPasswords no
+    UsePAM no
+    X11Forwarding no
+    AllowAgentForwarding no
+    AllowTcpForwarding local
+    GatewayPorts no
+    PermitTunnel no
+    PermitUserEnvironment no
+    SetEnv KUBECONFIG=/etc/codex-runner/kubeconfig
+    SetEnv PATH=/usr/local/bin:/usr/bin:/bin
+    Subsystem sftp internal-sftp
+    ClientAliveInterval 60
+    ClientAliveCountMax 3
+    LogLevel VERBOSE
+  config.toml: |
+    sandbox_mode = "workspace-write"
+    approval_policy = "on-request"
+    cli_auth_credentials_store = "file"
