@@ -39,7 +39,13 @@ data:
     install -d -m 0750 -o runner -g runner /home/runner
     install -d -m 0700 -o runner -g runner \
       /home/runner/.ssh /home/runner/.codex /home/runner/.ssh/host-keys
-    install -d -m 0750 -o runner -g runner /home/runner/projects
+    install -d -m 0750 -o runner -g runner \
+      /home/runner/projects /home/runner/Documents/Codex
+    # Mobile creates projectless chats from cwd=/ with Documents writable.
+    # Codex 0.159.1 masks these paths even when absent; bubblewrap cannot
+    # create them under the root-owned /. Pre-create empty, root-owned paths
+    # so the sandbox can mount its protections without granting root write.
+    install -d -m 0755 -o root -g root /.git /.agents /.codex /.aws
     install -d -m 0755 /run/sshd
 
     # Keep server identity stable across pod replacements.

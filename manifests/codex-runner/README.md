@@ -115,6 +115,13 @@ after connecting:
 codex sandbox -- /bin/true
 ```
 
+Mobile creates projectless chats under `/home/runner/Documents/Codex`. Bootstrap
+creates this directory and empty root-owned `/.git`, `/.agents`, `/.codex`, and
+`/.aws` directories. These are mount targets for Codex 0.159.1's sandbox
+protections: without them, mobile's initial workspace creation from `/` fails
+with `bwrap: Can't mkdir /.git: Permission denied`. They contain no credentials
+and do not grant the runner write access to `/`.
+
 Codex starts with `workspace-write` and `on-request` approval defaults. Its
 service account can inspect workloads, logs, nodes, metrics, storage, Argo
 Applications, and Longhorn health. It cannot read Secrets, exec into other pods,
