@@ -39,6 +39,15 @@ missing. No changes to existing applications or the default StorageClass are
 needed. The bootstrap ConfigMap is read at each container start; restart the
 Deployment after changing bootstrap scripts or SSH settings.
 
+The SSH public-key file uses a Secret `subPath` mount so its parent directory
+has permissions accepted by OpenSSH's `StrictModes`. SubPath mounts do not
+receive Secret updates automatically. After adding or replacing authorized
+keys in the Secret, restart the Deployment:
+
+```bash
+kubectl -n codex-runner rollout restart deployment/codex-runner
+```
+
 ## Connect and sign in
 
 MetalLB endpoint: **10.0.0.239:2222**, SSH username **runner**. Port 2222 avoids
