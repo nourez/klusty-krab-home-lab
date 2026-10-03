@@ -56,3 +56,27 @@ subjects:
   - kind: ServiceAccount
     name: codex-runner
     namespace: codex-runner
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: codex-runner-exec
+  namespace: homeassistant
+rules:
+  - apiGroups: [""]
+    resources: [pods/exec]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: codex-runner-exec
+  namespace: homeassistant
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: codex-runner-exec
+subjects:
+  - kind: ServiceAccount
+    name: codex-runner
+    namespace: codex-runner
