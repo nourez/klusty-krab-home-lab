@@ -124,11 +124,16 @@ and do not grant the runner write access to `/`.
 
 Codex starts with `workspace-write` and `on-request` approval defaults. Its
 service account can inspect workloads, logs, nodes, metrics, storage, Argo
-Applications, and Longhorn health. It cannot read Secrets, exec into other pods,
-or change cluster resources. Normal persistent workload changes go through Git
-and Argo CD. Operations such as Home Assistant PVC edits require a separately
-scoped RBAC grant before the runner can perform them; do not copy your admin
-kubeconfig into the runner.
+Applications, and Longhorn health. A Role in namespace `homeassistant` also
+allows `create` on `pods/exec`, so the runner can inspect and edit Home Assistant
+configuration on its PVC through `kubectl exec`. This allows commands in any pod
+in that namespace; RBAC cannot restrict exec to a specific file or command.
+It cannot read Kubernetes Secrets, exec into pods in other namespaces, or change
+cluster resources. Normal persistent workload changes go through Git and Argo
+CD. Scaling Home Assistant or creating a maintenance pod still requires a
+separate RBAC grant; do not copy your admin kubeconfig into the runner. Back up
+Home Assistant configuration before edits, and stop HA before registry edits
+as described in the repository's `AGENTS.md`.
 
 The service-account kubeconfig uses `tokenFile`, so Kubernetes token rotation
 continues to work in long-lived SSH sessions. Kubernetes RBAC remains effective
