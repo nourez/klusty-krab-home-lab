@@ -16,11 +16,6 @@ spec:
         app: codex-runner
     spec:
       serviceAccountName: codex-runner
-      securityContext:
-        # Bootstrap runs as root, but SSH sessions use runner (GID 1000).
-        # Keep projected tokens readable by runner after token rotation.
-        fsGroup: 1000
-        fsGroupChangePolicy: OnRootMismatch
       terminationGracePeriodSeconds: 30
       containers:
         - name: runner
@@ -44,7 +39,10 @@ spec:
               memory: 2Gi
               ephemeral-storage: 4Gi
           securityContext:
-            runAsUser: 0
+            # The pinned image defaults to root for bootstrap and sshd.
+            # Leave runAsUser unset so the projected token retains mode 0644
+            # for SSH user runner. Do not use fsGroup on the home PVC: it
+            # can broaden persisted SSH private-key permissions.
             allowPrivilegeEscalation: false
             # Bubblewrap needs nested namespaces. Install the named AppArmor
             # profile on the node before syncing (see README).
