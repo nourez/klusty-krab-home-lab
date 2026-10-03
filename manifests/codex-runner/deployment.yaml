@@ -16,6 +16,11 @@ spec:
         app: codex-runner
     spec:
       serviceAccountName: codex-runner
+      securityContext:
+        # Bootstrap runs as root, but SSH sessions use runner (GID 1000).
+        # Keep projected tokens readable by runner after token rotation.
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       terminationGracePeriodSeconds: 30
       containers:
         - name: runner

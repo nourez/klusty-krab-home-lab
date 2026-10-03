@@ -134,6 +134,14 @@ The service-account kubeconfig uses `tokenFile`, so Kubernetes token rotation
 continues to work in long-lived SSH sessions. Kubernetes RBAC remains effective
 even when a Codex command is approved outside its command sandbox.
 
+The pod sets `fsGroup: 1000` so SSH sessions running as `runner` can read the
+projected service-account token. Without this, the container's `runAsUser: 0`
+makes Kubernetes project the token as root-owned mode `0600`, and `kubectl`
+fails with permission denied before contacting the API. Group access is managed
+by Kubernetes and persists across token rotation. `fsGroupChangePolicy:
+OnRootMismatch` avoids recursively changing the home PVC's permissions when its
+root already has the expected group and mode.
+
 ## Persistence and recovery
 
 PVC pruning is disabled and the StorageClass uses `Retain`. App removal leaves
