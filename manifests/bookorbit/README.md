@@ -140,6 +140,14 @@ downloads or Watch transfers work.
 
 ## Validation
 
+BookOrbit requests 1Gi of memory and has a 4Gi limit. Its Node old-space heap is
+explicitly capped at 2048MB, leaving room for buffers, native allocations and
+other container memory. The initial 2Gi limit resulted in OOM kills during
+evaluation. Increasing the container limit with `auto` heap sizing would also
+increase the heap, so keep the explicit setting while monitoring memory and
+restart counts. This provides headroom; it does not establish or fix the cause
+of any application memory growth.
+
 From the repository:
 
 ```sh
