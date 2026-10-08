@@ -1,0 +1,13 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: bookorbit
+  namespace: bookorbit
+spec:
+  entryPoints: [web]
+  routes:
+    - match: Host(`bookorbit.nourez.net`)
+      kind: Rule
+      services:
+        - name: bookorbit
+          port: 80
