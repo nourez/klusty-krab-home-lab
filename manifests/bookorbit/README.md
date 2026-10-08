@@ -1,7 +1,9 @@
-# BookOrbit evaluation
+# BookOrbit
 
 Isolated deployment alongside Grimmory, Audiobookshelf, ABS-KoSync and their
-existing sync services. No existing workload or media file is changed.
+existing sync services. BookOrbit has its own writable ebook, audiobook and comics
+folders for evaluation and continued use. No existing workload or media file is
+changed, moved or copied automatically.
 
 ## Verified upstream configuration (2026-10-08)
 
@@ -32,7 +34,8 @@ findmnt -T /mnt/media -o SOURCE,TARGET,FSTYPE,OPTIONS
 mountpoint /mnt/media
 df -h /mnt/media
 sudo install -d -m 0755 -o 1000 -g 1000 \
-  /mnt/media/BookOrbit/app /mnt/media/BookOrbit/app/evaluation-books
+  /mnt/media/BookOrbit/app /mnt/media/BookOrbit/books \
+  /mnt/media/BookOrbit/audiobooks /mnt/media/BookOrbit/comics
 sudo install -d -m 0700 /mnt/media/BookOrbit/postgres
 ```
 
@@ -48,14 +51,20 @@ recursively chown the media root.
   Argo `Prune=false`. Namespace and PVCs are also protected from pruning.
 - PV capacities of 10Gi are binding declarations, **not disk quotas**. Both
   directories share the USB drive's free space. Monitor disk usage.
-- `/mnt/media/Grimmory/books` -> `/books/ebooks`: read-only.
-- `/mnt/media/Audiobooks` -> `/books/audiobooks`: read-only.
+- `/mnt/media/BookOrbit/books` -> `/books/ebooks`: writable ebook library.
+- `/mnt/media/BookOrbit/audiobooks` -> `/books/audiobooks`: writable audio library.
+- `/mnt/media/BookOrbit/comics` -> `/books/comics`: writable comics library.
 - `/mnt/media/BookOrbit/app` -> `/data`: writable BookOrbit state.
-- Its `evaluation-books` subdirectory -> `/books/evaluation`: writable copies
-  or independent test books, including read-along EPUB3 files.
-- Startup may adjust ownership only under BookOrbit's own `/data`; existing
-  library mounts are read-only. Uploads, renames, deletes and metadata writeback
-  cannot work on the existing media mounts. Turn those options off in the UI.
+- Media directories must be owned by UID/GID 1000:1000. Startup adjusts
+  ownership under `/data`, but does not repair the media directories.
+- Uploads, folder creation, renames and metadata writeback can use BookOrbit's
+  own libraries. Existing Grimmory and Audiobookshelf folders are not mounted.
+- When upgrading from the initial shared-library manifests, remove any library
+  configured for `/books/evaluation` from BookOrbit settings and review libraries
+  using `/books/ebooks` and `/books/audiobooks`: those paths now point to fresh
+  dedicated folders. The old `app/evaluation-books` directory is retained on disk
+  but no longer mounted as a library; no files are moved or deleted. Do not run
+  a missing-file cleanup against old library records until reviewing them.
 - This is application/data isolation, not a security boundary for a compromised
   hostPath workload. PostgreSQL ingress is restricted to BookOrbit pods.
 
@@ -153,17 +162,20 @@ kubectl -n bookorbit exec deployment/bookorbit-postgres -- \
   "SELECT extname FROM pg_extension WHERE extname IN ('uuid-ossp','pg_trgm','unaccent','vector');"
 curl --fail https://bookorbit.nourez.net/api/v1/health
 kubectl -n bookorbit exec deployment/bookorbit -- sh -c \
-  'awk '\''$2 == "/books/ebooks" || $2 == "/books/audiobooks" {print $2, $4}'\'' /proc/mounts'
+  'awk '\''$2 == "/books/ebooks" || $2 == "/books/audiobooks" || $2 == "/books/comics" {print $2, $4}'\'' /proc/mounts'
 ```
 
-Both existing-library mounts must report `ro`. Validate without writing test
-files to those directories. Check the existing Argo apps remain healthy.
+All three dedicated media mounts must report `rw`. Verify folder creation and an
+upload in each library through BookOrbit. Check the existing Argo apps remain
+healthy. Backups must cover all three media directories as well as app/database state.
 
 Evaluation sequence:
 
-1. Create separate ebook and audiobook libraries; use Folder as Book for
-   multi-track audiobooks. Disable file modification and automated enrichment
-   for the initial scan. Confirm counts and representative titles.
+1. Create separate libraries using `/books/ebooks`, `/books/audiobooks` and
+   `/books/comics`.
+   Upload independent books or explicitly copy sample files into these new
+   directories; do not move files out of the existing libraries. Use Folder as
+   Book for multi-track audiobooks. Confirm counts and representative titles.
 2. On cellular, log into the official BookOrbit iOS app, play/seek an audiobook,
    download it, play offline, reconnect and verify progress reconciliation.
    Upstream requires server 3.0+, iOS 26+, and watchOS 26+ for Watch features.
@@ -174,7 +186,7 @@ Evaluation sequence:
    firmware version; compatibility has had upstream regressions. Do not assume
    the KOReader plugin and CrossPoint share exact position representations.
 6. Put a legally owned test EPUB3 with SMIL media overlays and embedded narration
-   in `/books/evaluation`; test Read Along and offline playback. Separate EPUB
+   in `/books/ebooks`; test Read Along and offline playback. Separate EPUB
    and M4B files alone do not provide sentence-aligned read-along timing.
 7. Hardcover is a required later test, but **do not supply a token or enable
    sync until explicitly approved**. Use selected books only when approved,
@@ -195,9 +207,9 @@ References: [Hardcover](https://bookorbit.app/hardcover/),
 
 ## Backup and rollback
 
-Back up the dedicated BookOrbit database with `pg_dump`, the app directory and
-Secret before image upgrades or history imports. Do not copy live PGDATA as a
-database backup. Stop BookOrbit while taking a consistent app/database backup;
+Back up the dedicated BookOrbit database with `pg_dump`, app state, the Secret
+and all three media directories before image upgrades or history imports. Do not
+copy live PGDATA as a database backup. Stop BookOrbit while taking a consistent app/database backup;
 set replicas to zero **in git**, since Argo self-heal reverts live scaling.
 
 To stop the evaluation, set both BookOrbit deployment replicas to zero in git
