@@ -1,0 +1,83 @@
+# Local USB disk storage. These directories must exist before syncing.
+# Retain and Prune=false protect evaluation data during GitOps rollback.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookorbit-data
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  volumeMode: Filesystem
+  claimRef:
+    namespace: bookorbit
+    name: bookorbit-data
+  local:
+    path: /mnt/media/BookOrbit/app
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [klusty-krab-node-1]
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: bookorbit-postgres
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  volumeMode: Filesystem
+  claimRef:
+    namespace: bookorbit
+    name: bookorbit-postgres
+  local:
+    path: /mnt/media/BookOrbit/postgres
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values: [klusty-krab-node-1]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookorbit-data
+  namespace: bookorbit
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: ""
+  volumeName: bookorbit-data
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookorbit-postgres
+  namespace: bookorbit
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  storageClassName: ""
+  volumeName: bookorbit-postgres
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Gi
