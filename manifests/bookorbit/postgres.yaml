@@ -18,6 +18,30 @@ spec:
       automountServiceAccountToken: false
       nodeSelector:
         kubernetes.io/hostname: klusty-krab-node-1
+      initContainers:
+        - name: prepare-postgres-volume
+          image: pgvector/pgvector:pg18@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
+          command: [sh, -ec]
+          args:
+            - |
+              chown postgres:postgres /var/lib/postgresql/data
+              chmod 0700 /var/lib/postgresql/data
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER, DAC_OVERRIDE]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - name: postgres
+              mountPath: /var/lib/postgresql/data
       containers:
         - name: postgres
           image: pgvector/pgvector:pg18@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
