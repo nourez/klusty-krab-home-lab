@@ -105,6 +105,8 @@ spec:
               mountPath: /books/ebooks
             - name: audiobooks
               mountPath: /books/audiobooks
+            - name: comics
+              mountPath: /books/comics
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -122,3 +124,7 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 2Gi
+        - name: comics
+          hostPath:
+            path: /mnt/media/BookOrbit/comics
+            type: Directory

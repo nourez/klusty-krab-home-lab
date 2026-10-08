@@ -1,7 +1,7 @@
 # BookOrbit
 
 Isolated deployment alongside Grimmory, Audiobookshelf, ABS-KoSync and their
-existing sync services. BookOrbit has its own writable ebook and audiobook
+existing sync services. BookOrbit has its own writable ebook, audiobook and comics
 folders for evaluation and continued use. No existing workload or media file is
 changed, moved or copied automatically.
 
@@ -35,7 +35,7 @@ mountpoint /mnt/media
 df -h /mnt/media
 sudo install -d -m 0755 -o 1000 -g 1000 \
   /mnt/media/BookOrbit/app /mnt/media/BookOrbit/books \
-  /mnt/media/BookOrbit/audiobooks
+  /mnt/media/BookOrbit/audiobooks /mnt/media/BookOrbit/comics
 sudo install -d -m 0700 /mnt/media/BookOrbit/postgres
 ```
 
@@ -53,6 +53,7 @@ recursively chown the media root.
   directories share the USB drive's free space. Monitor disk usage.
 - `/mnt/media/BookOrbit/books` -> `/books/ebooks`: writable ebook library.
 - `/mnt/media/BookOrbit/audiobooks` -> `/books/audiobooks`: writable audio library.
+- `/mnt/media/BookOrbit/comics` -> `/books/comics`: writable comics library.
 - `/mnt/media/BookOrbit/app` -> `/data`: writable BookOrbit state.
 - Media directories must be owned by UID/GID 1000:1000. Startup adjusts
   ownership under `/data`, but does not repair the media directories.
@@ -161,16 +162,17 @@ kubectl -n bookorbit exec deployment/bookorbit-postgres -- \
   "SELECT extname FROM pg_extension WHERE extname IN ('uuid-ossp','pg_trgm','unaccent','vector');"
 curl --fail https://bookorbit.nourez.net/api/v1/health
 kubectl -n bookorbit exec deployment/bookorbit -- sh -c \
-  'awk '\''$2 == "/books/ebooks" || $2 == "/books/audiobooks" {print $2, $4}'\'' /proc/mounts'
+  'awk '\''$2 == "/books/ebooks" || $2 == "/books/audiobooks" || $2 == "/books/comics" {print $2, $4}'\'' /proc/mounts'
 ```
 
-Both dedicated media mounts must report `rw`. Verify folder creation and an
+All three dedicated media mounts must report `rw`. Verify folder creation and an
 upload in each library through BookOrbit. Check the existing Argo apps remain
-healthy. Backups must cover both media directories as well as app/database state.
+healthy. Backups must cover all three media directories as well as app/database state.
 
 Evaluation sequence:
 
-1. Create separate libraries using `/books/ebooks` and `/books/audiobooks`.
+1. Create separate libraries using `/books/ebooks`, `/books/audiobooks` and
+   `/books/comics`.
    Upload independent books or explicitly copy sample files into these new
    directories; do not move files out of the existing libraries. Use Folder as
    Book for multi-track audiobooks. Confirm counts and representative titles.
@@ -205,9 +207,9 @@ References: [Hardcover](https://bookorbit.app/hardcover/),
 
 ## Backup and rollback
 
-Back up the dedicated BookOrbit database with `pg_dump`, the app directory and
-Secret and both media directories before image upgrades or history imports. Do not copy live PGDATA as a
-database backup. Stop BookOrbit while taking a consistent app/database backup;
+Back up the dedicated BookOrbit database with `pg_dump`, app state, the Secret
+and all three media directories before image upgrades or history imports. Do not
+copy live PGDATA as a database backup. Stop BookOrbit while taking a consistent app/database backup;
 set replicas to zero **in git**, since Argo self-heal reverts live scaling.
 
 To stop the evaluation, set both BookOrbit deployment replicas to zero in git
