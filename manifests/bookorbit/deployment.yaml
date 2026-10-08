@@ -101,15 +101,10 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /data
-            - name: data
-              mountPath: /books/evaluation
-              subPath: evaluation-books
             - name: ebooks
               mountPath: /books/ebooks
-              readOnly: true
             - name: audiobooks
               mountPath: /books/audiobooks
-              readOnly: true
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -118,11 +113,11 @@ spec:
             claimName: bookorbit-data
         - name: ebooks
           hostPath:
-            path: /mnt/media/Grimmory/books
+            path: /mnt/media/BookOrbit/books
             type: Directory
         - name: audiobooks
           hostPath:
-            path: /mnt/media/Audiobooks
+            path: /mnt/media/BookOrbit/audiobooks
             type: Directory
         - name: tmp
           emptyDir:
