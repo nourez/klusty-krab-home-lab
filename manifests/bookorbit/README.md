@@ -38,8 +38,11 @@ sudo install -d -m 0700 /mnt/media/BookOrbit/postgres
 
 Do not proceed if the USB drive is absent or the target resolves to the node's
 root filesystem. Keep the drive mounted before k3s starts. The local PV paths
-must exist; Kubernetes does not create them. PostgreSQL initializes and owns
-its dedicated `pgdata` subdirectory. Never recursively chown the media root.
+must exist; Kubernetes does not create them. The PostgreSQL init container sets
+only its mounted volume root to the image's `postgres:postgres` owner and mode
+0700. This allows PostgreSQL to traverse a directory created by root. The image
+entrypoint initializes and owns its dedicated `pgdata` subdirectory. Never
+recursively chown the media root.
 
 - App and database have dedicated local PVs/PVCs, node affinity, `Retain`, and
   Argo `Prune=false`. Namespace and PVCs are also protected from pruning.
