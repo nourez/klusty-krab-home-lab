@@ -120,10 +120,14 @@ the database password for an already initialized PGDATA directory.
    application route:
    - Hostname: `bookorbit.nourez.net`
    - Service type: HTTP
-   - URL: `http://traefik.kube-system.svc.cluster.local:80`
-   - HTTP Host Header: `bookorbit.nourez.net`
-   This uses the new Traefik IngressRoute and ClusterIP app Service. Cloudflare
-   terminates public HTTPS; the existing connector reaches Traefik inside k3s.
+   - URL: `http://bookorbit.bookorbit.svc.cluster.local:80`
+   - Path: leave empty to cover the API, downloads and `/socket.io/`.
+   This matches the live remotely managed route verified on 2026-10-09.
+   Cloudflare terminates public HTTPS; the connector reaches the ClusterIP app
+   Service directly. No HTTP Host Header override is required for this route.
+   The Traefik IngressRoute is an alternative: when using
+   `http://traefik.kube-system.svc.cluster.local:80`, set HTTP Host Header to
+   `bookorbit.nourez.net` so Traefik matches the host rule.
    No router port forward, new MetalLB IP, or cloudflared manifest edit is needed.
 4. `APP_URL` and `CLIENT_URL` are already `https://bookorbit.nourez.net`.
    Use this same URL in the web, iOS and KOReader clients. A browser-only Access
