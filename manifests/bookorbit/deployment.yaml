@@ -65,6 +65,11 @@ spec:
                 secretKeyRef:
                   name: bookorbit-secrets
                   key: SETUP_BOOTSTRAP_TOKEN
+            - name: BOOK_REQUEST_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bookorbit-secrets
+                  key: BOOK_REQUEST_ENCRYPTION_KEY
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false

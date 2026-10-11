@@ -71,7 +71,7 @@ recursively chown the media root.
 ## Secrets
 
 Create a dedicated `bookorbit-secrets` Secret out of band. Do not commit it or
-reuse existing app/integration credentials. This script generates three
+reuse existing app/integration credentials. This script generates four
 independent values without printing them or putting them in command arguments:
 
 ```sh
@@ -82,6 +82,7 @@ values = {
     "POSTGRES_PASSWORD": secrets.token_hex(24),
     "JWT_SECRET": secrets.token_hex(32),
     "SETUP_BOOTSTRAP_TOKEN": secrets.token_hex(16),
+    "BOOK_REQUEST_ENCRYPTION_KEY": secrets.token_hex(32),
 }
 resource = {
     "apiVersion": "v1", "kind": "Secret",
@@ -109,6 +110,14 @@ kubectl -n bookorbit get secret bookorbit-secrets \
 
 Back up the Secret securely with the database and app data. Do not regenerate
 the database password for an already initialized PGDATA directory.
+
+`BOOK_REQUEST_ENCRYPTION_KEY` is a 32-byte random key encoded as 64 hex
+characters (equivalent to `openssl rand -hex 32`). BookOrbit uses it to encrypt
+saved download-client credentials. Preserve it with backups; replacing it can
+make existing credentials unreadable. For an existing installation, add only
+this missing key to the Secret, keeping all other values intact, before syncing
+the deployment. Restart BookOrbit after adding the key if the deployment's
+Secret reference is already present.
 
 ## GitOps rollout and initial Cloudflare Tunnel access
 
