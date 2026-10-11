@@ -27,6 +27,12 @@ spec:
           # Upstream main image, pinned for reproducible deployments.
           image: ghcr.io/crosspoint-reader/crosspoint-sync:main@sha256:63b78146990f0c5c17d32396316d7d5f8b11cc595ea7d64e1ed985aeccf7729f
           imagePullPolicy: IfNotPresent
+          command:
+            - node
+          args:
+            - --import
+            - /patches/bookorbit-audioless.mjs
+            - dist/index.js
           ports:
             - name: http
               containerPort: 8080
@@ -80,9 +86,15 @@ spec:
               port: http
             periodSeconds: 20
           volumeMounts:
+            - name: audioless-patch
+              mountPath: /patches
+              readOnly: true
             - name: data
               mountPath: /data
       volumes:
+        - name: audioless-patch
+          configMap:
+            name: crosspoint-sync-audioless-v1
         - name: data
           persistentVolumeClaim:
             claimName: crosspoint-sync-data

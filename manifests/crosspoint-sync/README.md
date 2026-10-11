@@ -42,6 +42,32 @@ Merge these manifests into the default branch and let Argo sync them.
 The upstream `main` image is pinned by digest; update the digest explicitly
 when upgrading.
 
+### Temporary BookOrbit audioless compatibility patch
+
+`audioless-patch.yaml` mounts a Node startup module hook. It changes only the
+BookOrbit connector's EPUB request from `/files/:fileId/serve` to
+`/files/:fileId/audioless-epub/download`. BookOrbit v3.3.0 preserves chapter XHTML,
+sentence anchors, and spine order while stripping narration and media overlays.
+This prevents large read-along EPUBs from hitting CrossPoint's 200 MiB archive
+limit or its 10-second progress-refresh deadline. It applies to both position
+conversion and highlight conversion and survives container/pod replacement.
+
+The hook validates that the pinned connector contains exactly one expected
+endpoint, and startup fails if that check does not pass. The immutable ConfigMap
+has a versioned name; when editing the hook, create a new version and update the
+Deployment's reference so Kubernetes rolls the pod. No credentials are in it.
+
+Remove the hook command/arguments, mount, volume, and ConfigMap once an upstream
+image includes an equivalent fix. Review this workaround before changing the
+image digest or using a BookOrbit release without the audioless API. The upstream
+image's default command is `node dist/index.js`.
+
+Confirmed with a media-overlay EPUB: the original was 440,206,308 bytes; the
+audio-free export was 2,314,585 bytes. The endpoint-only live test completed a
+progress refresh in 2.01 seconds and imported 11 highlights. Reader testing
+confirmed bidirectional position sync; device-originated annotation sync remains
+untested.
+
 ## Service connectors
 
 `TOKEN_ENC_KEY` comes from the out-of-band Secret `crosspoint-sync-connectors`,

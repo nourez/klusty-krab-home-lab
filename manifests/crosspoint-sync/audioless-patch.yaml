@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: crosspoint-sync-audioless-v1
+  namespace: crosspoint-sync
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+immutable: true
+data:
+  bookorbit-audioless.mjs: |
+    // Temporary compatibility patch for the pinned upstream image.
+    // BookOrbit v3.3.0's audioless export preserves XHTML and spine order.
+    import { registerHooks } from 'node:module';
+
+    const target = 'file:///app/dist/connectors/bookorbit.js';
+    const original = '/books/files/${encodeURIComponent(file)}/serve';
+    const replacement = '/books/files/${encodeURIComponent(file)}/audioless-epub/download';
+
+    registerHooks({
+      load(url, context, nextLoad) {
+        const loaded = nextLoad(url, context);
+        if (url !== target) return loaded;
+        const source = String(loaded.source);
+        if (source.split(original).length !== 2) {
+          throw new Error('BookOrbit audioless patch: expected exactly one EPUB endpoint; review the image and patch');
+        }
+        console.log(JSON.stringify({
+          msg: 'BookOrbit audioless endpoint patch applied',
+          patch: 'crosspoint-sync-audioless-v1',
+        }));
+        return { ...loaded, source: source.replace(original, replacement) };
+      },
+    });
