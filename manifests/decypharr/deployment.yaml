@@ -16,6 +16,7 @@ spec:
         app: decypharr
     spec:
       automountServiceAccountToken: false
+      enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: klusty-krab-node-1
       securityContext:
@@ -48,6 +49,8 @@ spec:
           image: ghcr.io/sirrobot01/decypharr:v2.7
           imagePullPolicy: IfNotPresent
           env:
+            - name: DECYPHARR_PORT
+              value: "8282"
             - name: TZ
               value: America/Toronto
             - name: PUID
