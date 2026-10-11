@@ -62,6 +62,10 @@ After completing setup, `/usr/bin/healthcheck --config /app` inside the
 container additionally checks API, UI and WebDAV listeners. A permitted
 test download is required to establish end-to-end BookOrbit compatibility.
 
+Service environment injection is disabled and `DECYPHARR_PORT` is explicitly
+set to 8282. Otherwise Kubernetes injects a `tcp://...` Service URL under this
+same name, which Decypharr interprets as its listen port.
+
 To stop the service, set replicas to zero in git. Retain the PVC and download
 directory during rollback/removal. Deleting the Application alone does not
 cascade-delete resources. Deleting the namespace explicitly deletes its PVC;
