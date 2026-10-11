@@ -37,11 +37,13 @@ spec:
               value: "0.0.0.0"
             - name: DATABASE_PATH
               value: /data/crosspoint.db
-            # Allow initial account creation; disable after registering.
+            # Accounts already exist; keep public registration closed.
             - name: REGISTRATION_DISABLED
-              value: "false"
+              value: "true"
+            # Only cloudflared can reach the app (see network-policy.yaml).
+            # Cloudflare overwrites X-Forwarded-Proto at the public edge.
             - name: TRUST_PROXY
-              value: "false"
+              value: "true"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

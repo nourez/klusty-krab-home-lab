@@ -4,8 +4,7 @@ metadata:
   name: crosspoint-sync
   namespace: crosspoint-sync
 spec:
-  type: LoadBalancer
-  loadBalancerIP: 10.0.0.240
+  type: ClusterIP
   selector:
     app: crosspoint-sync
   ports:
