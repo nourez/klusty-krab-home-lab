@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: decypharr
+  namespace: decypharr
+spec:
+  podSelector:
+    matchLabels:
+      app: decypharr
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/24
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bookorbit
+          podSelector:
+            matchLabels:
+              app: bookorbit
+      ports:
+        - protocol: TCP
+          port: 8282

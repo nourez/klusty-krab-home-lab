@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: decypharr-bootstrap
+  namespace: decypharr
+data:
+  config.json: |
+    {
+      "bind_address": "0.0.0.0",
+      "port": "8282",
+      "app_url": "http://10.0.0.240",
+      "use_auth": true,
+      "download_folder": "/downloads",
+      "default_download_action": "download",
+      "max_active_downloads": 2,
+      "mount": {"type": "none"}
+    }

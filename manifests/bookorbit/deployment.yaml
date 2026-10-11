@@ -114,7 +114,13 @@ spec:
               mountPath: /books/comics
             - name: tmp
               mountPath: /tmp
+            - name: downloads
+              mountPath: /downloads
       volumes:
+        - name: downloads
+          hostPath:
+            path: /mnt/media/BookOrbit/downloads
+            type: Directory
         - name: data
           persistentVolumeClaim:
             claimName: bookorbit-data

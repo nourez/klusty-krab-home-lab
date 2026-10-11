@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: decypharr
+  namespace: decypharr
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.0.240
+  allocateLoadBalancerNodePorts: false
+  loadBalancerSourceRanges:
+    - 10.0.0.0/24
+  selector:
+    app: decypharr
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

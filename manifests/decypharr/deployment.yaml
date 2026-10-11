@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: decypharr
+  namespace: decypharr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: decypharr
+  template:
+    metadata:
+      labels:
+        app: decypharr
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: klusty-krab-node-1
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+        - name: bootstrap-config
+          image: ghcr.io/sirrobot01/decypharr:v2.7
+          command: [sh, -ec]
+          args:
+            - |
+              if [ ! -e /app/config.json ]; then
+                cp /bootstrap/config.json /app/config.json
+              fi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: config
+              mountPath: /app
+            - name: bootstrap
+              mountPath: /bootstrap
+              readOnly: true
+      containers:
+        - name: decypharr
+          image: ghcr.io/sirrobot01/decypharr:v2.7
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: America/Toronto
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          ports:
+            - name: http
+              containerPort: 8282
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - name: config
+              mountPath: /app
+            - name: downloads
+              mountPath: /downloads
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: decypharr-config
+        - name: bootstrap
+          configMap:
+            name: decypharr-bootstrap
+        - name: downloads
+          hostPath:
+            path: /mnt/media/BookOrbit/downloads
+            type: Directory
