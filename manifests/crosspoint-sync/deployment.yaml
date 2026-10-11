@@ -44,6 +44,11 @@ spec:
             # Cloudflare overwrites X-Forwarded-Proto at the public edge.
             - name: TRUST_PROXY
               value: "true"
+            - name: TOKEN_ENC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: crosspoint-sync-connectors
+                  key: token-enc-key
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
