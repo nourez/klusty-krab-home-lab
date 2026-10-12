@@ -19,8 +19,8 @@ spec:
       enableServiceLinks: false
       containers:
         - name: prowlarr
-          # LinuxServer stable image index, verified 2026-10-11.
-          image: docker.io/linuxserver/prowlarr:latest@sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902
+          # BitlessByte ABB fork image index, verified 2026-10-12.
+          image: docker.io/bitlessbyte/prowlarr:latest@sha256:afced7f08e34d5530350b7a11ceca35d9e84a3dbcd89b9377ec69c37e2c9a0a0
           imagePullPolicy: IfNotPresent
           env:
             - name: PUID

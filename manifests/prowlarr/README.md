@@ -3,8 +3,8 @@
 LAN UI: `http://10.0.0.242`. BookOrbit endpoint:
 `http://prowlarr.prowlarr.svc.cluster.local` (port 80).
 
-The LinuxServer stable image is pinned to the multi-architecture Docker Hub
-index digest retrieved on 2026-10-11. Port 80 forwards to Prowlarr's 9696.
+The BitlessByte AudioBookBay fork image is pinned to the multi-architecture
+Docker Hub index digest retrieved on 2026-10-12. Port 80 forwards to Prowlarr's 9696.
 There is no Ingress, Cloudflare route, or NodePort. Ingress is limited to
 10.0.0.0/24 and BookOrbit app pods. Outbound access remains available for
 indexer searches and fetching torrent metadata.
@@ -58,5 +58,22 @@ and TorBox cloud content alone. Validate a dry-run candidate report before
 enabling deletion. Directory modification time alone is not proof of import.
 
 Sources: [LinuxServer image](https://docs.linuxserver.io/images/docker-prowlarr/),
+[ABB fork](https://github.com/BitlessByte0/prowlarr-abb),
 [Prowlarr](https://prowlarr.com/),
 [BookOrbit sources](https://bookorbit.app/book-requests/).
+
+## ABB fork migration (2026-10-12)
+
+The fork changes the HTTP User-Agent and bundles custom indexer definitions.
+It retains the LinuxServer `/config`, PUID/PGID and port conventions. The pinned
+image reports application version `10.0.0.19985`, branch `master`, and migration
+level 44; the previous LinuxServer `2.6.5.5623-ls163` image also used migration
+level 44. Compare actual schema compatibility rather than its custom version
+number. An isolated restore test precedes the production image change.
+
+Pre-migration backup: `/config/Backups/manual/prowlarr_backup_v2.6.5.5623_2026.10.12_09.04.23.zip`.
+It contains credentials; retain it securely on the PVC and never commit it.
+For rollback, stop the workload through GitOps and restore this backup before
+starting the prior image:
+`docker.io/linuxserver/prowlarr:latest@sha256:f9151e5bc1025c6d0a630d503210cdcb6bb55a7cc098562609d96a408d838902`.
+Do not assume changing only the image is safe after later database migrations.
