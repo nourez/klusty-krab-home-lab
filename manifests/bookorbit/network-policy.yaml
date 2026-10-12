@@ -13,6 +13,9 @@ spec:
         - podSelector:
             matchLabels:
               app: bookorbit
+        - podSelector:
+            matchLabels:
+              app: download-cache-cleanup
       ports:
         - protocol: TCP
           port: 5432

@@ -18,6 +18,12 @@ spec:
           podSelector:
             matchLabels:
               app: bookorbit
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bookorbit
+          podSelector:
+            matchLabels:
+              app: download-cache-cleanup
       ports:
         - protocol: TCP
           port: 8282
