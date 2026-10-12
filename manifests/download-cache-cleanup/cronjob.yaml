@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: download-cache-cleanup
+  namespace: bookorbit
+spec:
+  suspend: true
+  schedule: "30 4 * * *"
+  timeZone: America/Toronto
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: download-cache-cleanup
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          enableServiceLinks: false
+          nodeSelector:
+            kubernetes.io/hostname: klusty-krab-node-1
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          containers:
+            - name: cleanup
+              image: ghcr.io/bookorbit/bookorbit:3.3.0
+              command: [node, /scripts/cleanup.cjs]
+              env:
+                - name: DRY_RUN
+                  value: "false"
+                - name: RETENTION_DAYS
+                  value: "7"
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: download-cache-cleanup-credentials
+                      key: PGPASSWORD
+                - name: DECYPHARR_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: download-cache-cleanup-credentials
+                      key: DECYPHARR_API_TOKEN
+              securityContext:
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: [ALL]
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 256Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+                - name: ebooks
+                  mountPath: /books/ebooks
+                  readOnly: true
+                - name: audiobooks
+                  mountPath: /books/audiobooks
+                  readOnly: true
+                - name: comics
+                  mountPath: /books/comics
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: download-cache-cleanup-script
+            - name: ebooks
+              hostPath:
+                path: /mnt/media/BookOrbit/books
+                type: Directory
+            - name: audiobooks
+              hostPath:
+                path: /mnt/media/BookOrbit/audiobooks
+                type: Directory
+            - name: comics
+              hostPath:
+                path: /mnt/media/BookOrbit/comics
+                type: Directory
