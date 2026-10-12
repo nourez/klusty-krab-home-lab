@@ -6,6 +6,16 @@ const SERVICE = 'http://decypharr.decypharr.svc.cluster.local';
 const LIBRARIES = ['/books/ebooks', '/books/audiobooks', '/books/comics'];
 const COMPLETE = new Set(['uploading', 'stalledUP', 'pausedUP', 'stoppedUP']);
 const DAY = 86400000;
+// Match v2.7 internal/utils.RemoveExtension, used by Entry.DownloadPath().
+// Ebook extensions are intentionally not stripped: upstream does not strip them.
+const STRIPPED_EXTENSIONS = new Set(('webm,m4v,3gp,nsv,ty,rm,rmvb,ifo,mov,qt,divx,xvid,bivx,nrg,pva,wmv,' +
+  'asf,asx,ogm,ogv,m2v,avi,bin,dat,dvr-ms,mpg,mpeg,mp4,avc,vp3,svq3,nuv,viv,dv,fli,flv,wpl,vob,mkv,mk3d,' +
+  'ts,wtv,m2ts,strm,m3u,mp2,mp3,m4a,m4b,m4p,ogg,oga,opus,wma,wav,wv,flac,ape,aif,aiff,aifc').split(','));
+function downloadName(name) {
+  const ext = path.extname(name);
+  const stem = ext ? name.slice(0, -ext.length) : name;
+  return STRIPPED_EXTENSIONS.has(ext.slice(1).toLowerCase()) && stem && stem !== '.' ? stem : name;
+}
 
 function within(file, root) {
   return typeof file === 'string' && !file.endsWith('/') && !file.includes('\\') && !file.includes('\0') &&
@@ -17,7 +27,9 @@ function downloadDirectory(file) {
 function complete(torrent, hash) {
   return torrent && torrent.hash?.toLowerCase() === hash && torrent.category === 'bookorbit' &&
     COMPLETE.has(torrent.state) && torrent.progress === 1 && torrent.amount_left === 0 &&
-    downloadDirectory(torrent.content_path);
+    torrent.save_path === ROOT && typeof torrent.name === 'string' &&
+    path.basename(torrent.name) === torrent.name && !torrent.name.includes('\\') &&
+    downloadDirectory(torrent.content_path) && torrent.content_path === path.join(ROOT, downloadName(torrent.name));
 }
 function eligibility(rows, torrent, now, retentionDays) {
   const hash = rows[0]?.client_key?.toLowerCase();
@@ -73,9 +85,9 @@ async function main() {
   if (!['true', 'false'].includes(process.env.DRY_RUN)) throw Error('explicit_dry_run_setting_required');
   const dryRun = process.env.DRY_RUN === 'true';
   const {Client} = require('/app/node_modules/pg');
-  const db = new Client({host: 'bookorbit-postgres.bookorbit.svc.cluster.local', port: 5432,
+  const databaseOptions = {host: 'bookorbit-postgres.bookorbit.svc.cluster.local', port: 5432,
     database: 'bookorbit', user: 'download_cache_cleanup', password: process.env.PGPASSWORD,
-    connectionTimeoutMillis: 10000, statement_timeout: 10000});
+    connectionTimeoutMillis: 5000, statement_timeout: 10000};
   const token = process.env.DECYPHARR_API_TOKEN;
   if (!token) throw Error('missing_decypharr_token');
   async function api(endpoint, data) {
@@ -88,7 +100,18 @@ async function main() {
     if (!response.ok) throw Error('decypharr_http_' + response.status);
     return data ? null : response.json();
   }
-  await db.connect();
+  // k3s may start this short-lived container before its network policy rules
+  // have converged. Retry only transient connection errors, never auth errors.
+  let db;
+  for (let attempt = 1; attempt <= 10; attempt++) {
+    db = new Client(databaseOptions);
+    try { await db.connect(); break; } catch (error) {
+      await db.end().catch(() => {});
+      if (!['ECONNREFUSED', 'ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN'].includes(error.code) || attempt === 10) throw error;
+      console.log(JSON.stringify({event:'database_connection_retry', attempt}));
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
   let deleted = 0, candidates = 0, failures = 0;
   try {
     const snapshot = (await db.query(QUERY, [SERVICE])).rows;
@@ -134,7 +157,8 @@ async function main() {
   } finally { await db.end(); }
 }
 module.exports = {within, downloadDirectory, complete, eligibility, verifyLibrary};
-if (require.main === module) main().catch(() => {
+if (require.main === module) main().catch(error => {
+  console.error(JSON.stringify({event:'aborted', code: /^[a-zA-Z_0-9]+$/.test(error.code || '') ? error.code : 'verification_failed'}));
   console.error('Cleanup aborted; no further deletions attempted. Check database/API connectivity and mounted library files.');
   process.exitCode = 1;
 });
