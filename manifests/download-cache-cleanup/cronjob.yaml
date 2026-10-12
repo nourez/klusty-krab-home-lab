@@ -4,7 +4,7 @@ metadata:
   name: download-cache-cleanup
   namespace: bookorbit
 spec:
-  suspend: true
+  suspend: false
   schedule: "30 4 * * *"
   timeZone: America/Toronto
   concurrencyPolicy: Forbid
@@ -12,6 +12,9 @@ spec:
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
   jobTemplate:
+    metadata:
+      labels:
+        app: download-cache-cleanup
     spec:
       backoffLimit: 1
       activeDeadlineSeconds: 600

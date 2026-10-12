@@ -3,7 +3,8 @@ const assert = require('node:assert/strict');
 const {eligibility,downloadDirectory,complete,within} = require('../manifests/download-cache-cleanup/cleanup.cjs');
 const hash='a'.repeat(40), now=Date.parse('2026-10-20T12:00:00Z');
 const directory='/downloads/bookorbit/Test book';
-const torrent={hash,category:'bookorbit',state:'pausedUP',progress:1,amount_left:0,content_path:directory};
+const torrent={hash,category:'bookorbit',state:'pausedUP',progress:1,amount_left:0,
+ name:'Test book',save_path:'/downloads/bookorbit',content_path:directory};
 const imported={client_key:hash,download_id:2,request_id:1,download_status:'imported',request_status:'available',
  matched_book_id:10,book_status:'present',imported_at:'2026-10-12T12:00:00Z',content_path:directory,
  local_path:directory+'/book.m4b',library_files:[{path:'/books/audiobooks/Author/book.m4b',size:123}]};
@@ -25,7 +26,8 @@ test('pending review, missing book linkage, and removed library books are protec
   assert.equal(eligible([{...imported,...change}]),'unlinked_library');
 });
 test('active, checking, incomplete or other-category torrents are protected',()=>{
- for(const change of [{state:'downloading'},{state:'checkingUP'},{progress:0.99},{amount_left:1},{category:'other'}])
+ for(const change of [{state:'downloading'},{state:'checkingUP'},{progress:0.99},{amount_left:1},{category:'other'},
+ {save_path:'/books/audiobooks'},{name:'../Test book'},{name:'Different book'}])
   assert.equal(complete({...torrent,...change},hash),false);
 });
 test('deletion scope excludes root, traversal, nested paths, and library folders',()=>{

@@ -15,7 +15,9 @@ ignored. An old import with no matched book is skipped rather than guessed.
 
 The queue must independently report complete, 100% progress and no bytes left.
 Its content directory must be a direct child of `/downloads/bookorbit` and agree
-with the imported path. The script repeats database, queue and library checks
+with the imported path, save directory and queue name. Ambiguous file-named
+torrents whose displayed name differs from their download directory are retained.
+The script repeats database, queue and library checks
 immediately before deletion. These checks reduce races; no cross-application
 transaction exists, so avoid manually reusing a completed download directory
 while cleanup is running.
@@ -63,8 +65,12 @@ counts; they do not contain credentials or provider download URLs. Kubernetes
 retains three successful and five failed Jobs. `concurrencyPolicy: Forbid`, a
 10-minute deadline and one retry limit overlapping or stuck scheduled runs.
 
-Initial deployment uses `suspend: true`; enable it in git only after a live
-dry run has passed. To pause later, set `suspend: true` in git and let Argo sync.
+The job was deployed suspended and a live dry run passed on 2026-10-12 with
+zero deletion candidates, zero deleted files and zero failures. It is now enabled.
+Short-lived pods can initially receive a database connection refusal while k3s
+network rules converge; bounded transient connection retries were validated
+in the live dry run. Authentication failures are not retried.
+To pause later, set `suspend: true` in git and let Argo sync.
 Suspension does not stop an already-running Job; inspect it before changing it.
 Failed checks leave the affected downloads in place. Review failed Jobs rather
 than relaxing the guards to force removal. Cleanup does not sweep untracked,
