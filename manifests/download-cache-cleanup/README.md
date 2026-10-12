@@ -15,8 +15,8 @@ ignored. An old import with no matched book is skipped rather than guessed.
 
 The queue must independently report complete, 100% progress and no bytes left.
 Its content directory must be a direct child of `/downloads/bookorbit` and agree
-with the imported path, save directory and queue name. Ambiguous file-named
-torrents whose displayed name differs from their download directory are retained.
+with the imported path, save directory and queue name using Decypharr v2.7's
+exact media-extension stripping rules. Unexpected naming differences are retained.
 The script repeats database, queue and library checks
 immediately before deletion. These checks reduce races; no cross-application
 transaction exists, so avoid manually reusing a completed download directory

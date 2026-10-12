@@ -10,6 +10,12 @@ const imported={client_key:hash,download_id:2,request_id:1,download_status:'impo
  local_path:directory+'/book.m4b',library_files:[{path:'/books/audiobooks/Author/book.m4b',size:123}]};
 const eligible=(rows=[imported],t=torrent)=>eligibility(rows,t,now,7);
 test('allows only an aged, completed, confirmed import',()=>assert.equal(eligible(),null));
+test('file-named audio torrents match Decypharr folder naming without broad suffix stripping',()=>{
+ assert.equal(complete({...torrent,name:'Test book.mp3'},hash),true);
+ assert.equal(complete({...torrent,name:'Test book.M4B'},hash),true);
+ assert.equal(complete({...torrent,name:'Test book.epub'},hash),false);
+ assert.equal(complete({...torrent,name:'Test book.2026'},hash),false);
+});
 test('seven days begins at successful import',()=>{
  assert.equal(eligible([{...imported,imported_at:'2026-10-19T00:00:00Z'}]),'retention');
  assert.equal(eligible([{...imported,imported_at:null}]),'retention');

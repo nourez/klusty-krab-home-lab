@@ -6,6 +6,16 @@ const SERVICE = 'http://decypharr.decypharr.svc.cluster.local';
 const LIBRARIES = ['/books/ebooks', '/books/audiobooks', '/books/comics'];
 const COMPLETE = new Set(['uploading', 'stalledUP', 'pausedUP', 'stoppedUP']);
 const DAY = 86400000;
+// Match v2.7 internal/utils.RemoveExtension, used by Entry.DownloadPath().
+// Ebook extensions are intentionally not stripped: upstream does not strip them.
+const STRIPPED_EXTENSIONS = new Set(('webm,m4v,3gp,nsv,ty,rm,rmvb,ifo,mov,qt,divx,xvid,bivx,nrg,pva,wmv,' +
+  'asf,asx,ogm,ogv,m2v,avi,bin,dat,dvr-ms,mpg,mpeg,mp4,avc,vp3,svq3,nuv,viv,dv,fli,flv,wpl,vob,mkv,mk3d,' +
+  'ts,wtv,m2ts,strm,m3u,mp2,mp3,m4a,m4b,m4p,ogg,oga,opus,wma,wav,wv,flac,ape,aif,aiff,aifc').split(','));
+function downloadName(name) {
+  const ext = path.extname(name);
+  const stem = ext ? name.slice(0, -ext.length) : name;
+  return STRIPPED_EXTENSIONS.has(ext.slice(1).toLowerCase()) && stem && stem !== '.' ? stem : name;
+}
 
 function within(file, root) {
   return typeof file === 'string' && !file.endsWith('/') && !file.includes('\\') && !file.includes('\0') &&
@@ -19,7 +29,7 @@ function complete(torrent, hash) {
     COMPLETE.has(torrent.state) && torrent.progress === 1 && torrent.amount_left === 0 &&
     torrent.save_path === ROOT && typeof torrent.name === 'string' &&
     path.basename(torrent.name) === torrent.name && !torrent.name.includes('\\') &&
-    downloadDirectory(torrent.content_path) && torrent.content_path === path.join(ROOT, torrent.name);
+    downloadDirectory(torrent.content_path) && torrent.content_path === path.join(ROOT, downloadName(torrent.name));
 }
 function eligibility(rows, torrent, now, retentionDays) {
   const hash = rows[0]?.client_key?.toLowerCase();
