@@ -19,7 +19,69 @@ spec:
     spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        - name: fetch-nest-go2rtc
+          image: ghcr.io/home-assistant/home-assistant:2026.8.0
+          command: ["python", "-c"]
+          args:
+            - |
+              import hashlib
+              import pathlib
+              import urllib.request
+              url = "https://github.com/nourez/klusty-krab-home-lab/releases/download/nest-go2rtc-1.9.14-nest1/go2rtc-nest-linux-amd64"
+              expected = "4384a08490975c064c9431810a064740582d3584b504c2b0320274ebc2fa22c4"
+              with urllib.request.urlopen(url, timeout=120) as response:
+                  binary = response.read()
+              if hashlib.sha256(binary).hexdigest() != expected:
+                  raise SystemExit("Nest adapter checksum mismatch")
+              path = pathlib.Path("/adapter/go2rtc")
+              path.write_bytes(binary)
+              path.chmod(0o755)
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "25m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: nest-go2rtc-binary
+              mountPath: /adapter
       containers:
+        # Publish the pinned release asset and create nest-go2rtc before syncing.
+        # Dedicated adapter: Nest WebRTC -> loopback RTSP for HA/HomeKit.
+        - name: nest-go2rtc
+          image: ghcr.io/home-assistant/home-assistant:2026.8.0
+          imagePullPolicy: IfNotPresent
+          command: ["/adapter/go2rtc"]
+          args: ["-config", "/etc/go2rtc/go2rtc.yaml"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65532
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "25m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: nest-go2rtc-binary
+              mountPath: /adapter
+              readOnly: true
+            - name: nest-go2rtc
+              mountPath: /etc/go2rtc
+              readOnly: true
         - name: homeassistant
           image: ghcr.io/home-assistant/home-assistant:2026.8.0
           imagePullPolicy: IfNotPresent
@@ -67,6 +129,11 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 10
       volumes:
+        - name: nest-go2rtc-binary
+          emptyDir: {}
+        - name: nest-go2rtc
+          secret:
+            secretName: nest-go2rtc
         - name: config
           persistentVolumeClaim:
             claimName: homeassistant-config
