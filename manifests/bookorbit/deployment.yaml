@@ -41,7 +41,7 @@ spec:
               memory: 128Mi
       containers:
         - name: bookorbit
-          image: ghcr.io/bookorbit/bookorbit:3.3.0
+          image: ghcr.io/bookorbit/bookorbit:3.4.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
