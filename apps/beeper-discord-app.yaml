@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: git@github.com:nourez/klusty-krab-home-lab.git
     targetRevision: HEAD
-    path: manifests/beeper-discord
+    path: manifests/retired/beeper-discord
     directory:
       recurse: true
   destination:

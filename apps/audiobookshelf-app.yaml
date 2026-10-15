@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: git@github.com:nourez/klusty-krab-home-lab.git
     targetRevision: HEAD
-    path: manifests/audiobookshelf
+    path: manifests/retired/audiobookshelf
     directory:
       recurse: true
   destination:
