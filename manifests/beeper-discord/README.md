@@ -1,10 +1,12 @@
 # Beeper Discord bridge
 
-Discord sync is disabled as of 2026-10-15 (`replicas: 0`). Argo CD continues
-managing the deployment and PVC so its session data is retained. To resume,
-change the replica count to 1 in Git and let Argo CD sync. WhatsApp is unaffected.
+Discord sync is archived as of 2026-10-15 (`replicas: 0`). Its Application is
+retained in `apps-archive/`, outside the root app source. Session data is retained
+on its PVC. To resume, move the Application back to `apps/`, change the replica
+count to 1 in Git, and let Argo CD sync. WhatsApp is unaffected. See
+[archival rollout instructions](../../apps-archive/README.md) before pruning.
 
-Argo CD runs one `bbctl run sh-discord` instance in the existing `beeper`
+When restored, Argo CD runs one `bbctl run sh-discord` instance in the existing `beeper`
 namespace. It reuses the manually created `beeper-bridge-manager` Secret and
 stores bridge configuration, database, and Discord session on its own Longhorn
 PVC at `/data`. The bridge connects outbound to Beeper, so it needs no Service

@@ -6,6 +6,7 @@ here are retained for reference and are not deployed by the app-of-apps.
 As of 2026-10-15, BookOrbit replaces `abs-kosync-bridge`, `audiobookshelf`,
 `audiobookshelf-hardcover-sync`, and `grimmory`. Their workload manifests remain
 in `manifests/` with zero replicas, including Grimmory's MariaDB deployment.
+Discord–Beeper (`beeper-discord`) is also archived with zero replicas.
 PVCs, namespaces, secrets, and host-path data are retained for recovery.
 
 ## Rollout
@@ -21,6 +22,7 @@ kubectl -n abs-kosync-bridge scale deployment/abs-kosync-bridge --replicas=0
 kubectl -n audiobookshelf scale deployment/audiobookshelf --replicas=0
 kubectl -n audiobookshelf-hardcover-sync scale deployment/audiobookshelf-hardcover-sync --replicas=0
 kubectl -n grimmory scale deployment/grimmory deployment/mariadb --replicas=0
+kubectl -n beeper scale deployment/beeper-discord --replicas=0
 ```
 
 Check each namespace for remaining pods after rollout. Do not cascade-delete
@@ -29,9 +31,8 @@ retained data. Inspect live Application finalizers before pruning if they
 differ from Git. Any separately configured Cloudflare public routes can be
 disabled separately; their configuration is not defined here.
 
-Discord–Beeper sync is paused separately with zero replicas in
-`manifests/beeper-discord/deployment.yaml`; its Application stays active so
-Argo CD enforces the pause. Verify no `beeper-discord` pods remain in `beeper`.
+Verify no `beeper-discord` pods remain in `beeper`. The shared `beeper` namespace
+and `beeper-bridge-manager` Secret must remain for the active WhatsApp bridge.
 
 ## Restore
 
