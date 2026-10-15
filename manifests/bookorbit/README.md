@@ -1,9 +1,10 @@
 # BookOrbit
 
-Isolated deployment alongside Grimmory, Audiobookshelf, ABS-KoSync and their
-existing sync services. BookOrbit has its own writable ebook, audiobook and comics
-folders for evaluation and continued use. No existing workload or media file is
-changed, moved or copied automatically.
+BookOrbit is the selected replacement for Grimmory, Audiobookshelf, ABS-KoSync
+and ABS-Hardcover sync as of 2026-10-15. Those services are being retired; see
+[retirement rollout](../../apps-archive/README.md). BookOrbit uses its dedicated
+writable ebook, audiobook and comics folders. Retirement does not automatically
+move media, import history, or configure integrations.
 
 ## Verified upstream configuration (2026-10-08)
 
@@ -58,7 +59,9 @@ recursively chown the media root.
 - Media directories must be owned by UID/GID 1000:1000. Startup adjusts
   ownership under `/data`, but does not repair the media directories.
 - Uploads, folder creation, renames and metadata writeback can use BookOrbit's
-  own libraries. Existing Grimmory and Audiobookshelf folders are not mounted.
+  own libraries. Retained Grimmory and Audiobookshelf folders are not mounted
+  or automatically migrated; verify any desired titles exist in BookOrbit before
+  removing old data. The mounts listed above remain the current media locations.
 - When upgrading from the initial shared-library manifests, remove any library
   configured for `/books/evaluation` from BookOrbit settings and review libraries
   using `/books/ebooks` and `/books/audiobooks`: those paths now point to fresh
@@ -183,10 +186,10 @@ kubectl -n bookorbit exec deployment/bookorbit -- sh -c \
 ```
 
 All three dedicated media mounts must report `rw`. Verify folder creation and an
-upload in each library through BookOrbit. Check the existing Argo apps remain
-healthy. Backups must cover all three media directories as well as app/database state.
+upload in each library through BookOrbit. Check the active Argo apps remain
+healthy and verify the retired services using the retirement runbook. Backups must cover all three media directories as well as app/database state.
 
-Evaluation sequence:
+Client and integration validation (initial evaluation checklist):
 
 1. Create separate libraries using `/books/ebooks`, `/books/audiobooks` and
    `/books/comics`.
@@ -208,8 +211,10 @@ Evaluation sequence:
 7. Hardcover is a required later test, but **do not supply a token or enable
    sync until explicitly approved**. Use selected books only when approved,
    verify matches and edition page counts, and test with an isolated book.
-   The existing ABS-Hardcover service keeps running; avoid competing writers
-   to the same Hardcover record during evaluation.
+   ABS-Hardcover sync is retired and no longer owns synchronization. BookOrbit
+   is the intended integration owner, but retirement does not enable its
+   Hardcover integration or prove it is configured. Verify BookOrbit settings
+   and obtain approval before enabling it; avoid competing writers.
 8. History import is a separate evaluation step after scanning: back up
    BookOrbit, perform a dry run and review user/path mapping before import.
    Upstream supports Grimmory and ABS, with source-dependent omissions; this
@@ -229,9 +234,10 @@ and all three media directories before image upgrades or history imports. Do not
 copy live PGDATA as a database backup. Stop BookOrbit while taking a consistent app/database backup;
 set replicas to zero **in git**, since Argo self-heal reverts live scaling.
 
-To stop the evaluation, set both BookOrbit deployment replicas to zero in git
+To stop BookOrbit, set both BookOrbit deployment replicas to zero in git
 and let Argo sync. Remove only `bookorbit.nourez.net` from the Cloudflare Tunnel.
-Existing applications and their routes remain unchanged.
+Archived services do not restart automatically; restore them explicitly using
+the retirement runbook if needed.
 
 For removal, first stop BookOrbit via git, then remove its app and manifests.
 Since the child Application has no cascade finalizer, deleting it alone does

@@ -1,42 +1,37 @@
 # Archived applications
 
-This directory is outside the root application's `apps/` source. Applications
-here are retained for reference and are not deployed by the app-of-apps.
+BookOrbit replaces `abs-kosync-bridge`, `audiobookshelf`,
+`audiobookshelf-hardcover-sync`, and `grimmory` as of 2026-10-15.
+Discord–Beeper is also retired. This directory preserves their original
+Application definitions; original workload manifests remain in `manifests/`
+with zero replicas for recovery.
 
-As of 2026-10-15, BookOrbit replaces `abs-kosync-bridge`, `audiobookshelf`,
-`audiobookshelf-hardcover-sync`, and `grimmory`. Their workload manifests remain
-in `manifests/` with zero replicas, including Grimmory's MariaDB deployment.
-Discord–Beeper (`beeper-discord`) is also archived with zero replicas.
-PVCs, namespaces, secrets, and host-path data are retained for recovery.
+## Retirement rollout
 
-## Rollout
+Temporary Application entries remain in `apps/`, pointing to
+`manifests/retired/<service>` instead of the original workloads. These sources
+contain only retained namespaces and PVCs. Argo CD's automated sync and pruning
+therefore remove the retired Deployments, Services, ConfigMap and ABS
+IngressRoute while retaining storage. This avoids racing root pruning against
+child shutdown and releases the retired MetalLB addresses.
 
-The archived Application manifests have no cascading deletion finalizer.
-Removing them from `apps/` can orphan running workloads, so stop the deployments
-before the root application prunes the Applications. Once the PR is merged,
-sync each child application at the merged revision first (zero replicas), then
-sync `root-app`. If root pruning has already happened, stop orphaned workloads:
+After merge, verify all five Applications have synced the merged revision and
+are healthy, all six Deployments (including Grimmory MariaDB) are gone, and
+the four public Services plus MariaDB Service and ABS IngressRoute are gone.
+Confirm PVCs and namespaces remain. Host-path data and out-of-band secrets
+are not removed. Keep the shared `beeper` namespace and bridge-manager Secret
+for WhatsApp. No change is made to the WhatsApp Application.
 
-```sh
-kubectl -n abs-kosync-bridge scale deployment/abs-kosync-bridge --replicas=0
-kubectl -n audiobookshelf scale deployment/audiobookshelf --replicas=0
-kubectl -n audiobookshelf-hardcover-sync scale deployment/audiobookshelf-hardcover-sync --replicas=0
-kubectl -n grimmory scale deployment/grimmory deployment/mariadb --replicas=0
-kubectl -n beeper scale deployment/beeper-discord --replicas=0
-```
+Only after this verification, remove the five temporary entries from `apps/`
+in a follow-up PR. Keep `manifests/retired/` and these archived definitions.
+The Applications have no cascading deletion finalizer in Git; inspect live
+finalizers before removal. Do not cascade-delete Applications or delete
+namespaces/PVCs. Live cluster cleanup has not been verified by this PR.
 
-Check each namespace for remaining pods after rollout. Do not cascade-delete
-the archived Applications or delete their namespaces/PVCs: that can remove
-retained data. Inspect live Application finalizers before pruning if they
-differ from Git. Any separately configured Cloudflare public routes can be
-disabled separately; their configuration is not defined here.
-
-Verify no `beeper-discord` pods remain in `beeper`. The shared `beeper` namespace
-and `beeper-bridge-manager` Secret must remain for the active WhatsApp bridge.
+Cloudflare routes are managed outside this repo and can be disabled separately.
 
 ## Restore
 
-Move the desired Application YAML back to `apps/`, change the corresponding
-deployment replica counts to 1 (both deployments for Grimmory), and let Argo CD
-sync. The archived Applications still point to their original manifest paths.
-Ensure the original storage and out-of-band secrets are available first.
+Replace the temporary Application with its archived definition (or copy it back
+to `apps/` after cleanup), set the original deployment replicas to 1 (both for
+Grimmory), and let Argo CD sync. Confirm storage and out-of-band secrets exist.

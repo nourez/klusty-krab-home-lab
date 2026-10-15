@@ -1,9 +1,9 @@
 # Beeper Discord bridge
 
-Discord sync is archived as of 2026-10-15 (`replicas: 0`). Its Application is
-retained in `apps-archive/`, outside the root app source. Session data is retained
-on its PVC. To resume, move the Application back to `apps/`, change the replica
-count to 1 in Git, and let Argo CD sync. WhatsApp is unaffected. See
+Discord sync is archived as of 2026-10-15 (`replicas: 0`). Its original Application is
+retained in `apps-archive/`. A temporary active Application manages only the
+retained PVC while Argo prunes the bridge deployment. To resume, restore the
+archived Application source and change the original replica count to 1 in Git. WhatsApp is unaffected. See
 [archival rollout instructions](../../apps-archive/README.md) before pruning.
 
 When restored, Argo CD runs one `bbctl run sh-discord` instance in the existing `beeper`
