@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bookorbit-read-aloud-worker
+  namespace: bookorbit
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: bookorbit-read-aloud-worker
+  template:
+    metadata:
+      labels:
+        app: bookorbit-read-aloud-worker
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: klusty-krab-node-1
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: ghcr.io/bookorbit/bookorbit-read-aloud-worker:3.6.0@sha256:4ca7f141f346365af8970809f7fb3947c309082c81b5b00cee0cdec5ed6c5f96
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8787
+          env:
+            - name: READ_ALOUD_WORKER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bookorbit-secrets
+                  key: READ_ALOUD_WORKER_TOKEN
+            - name: READ_ALOUD_WORKER_HOST
+              value: 0.0.0.0
+            - name: PORT
+              value: "8787"
+            - name: READ_ALOUD_LIBRARY_ROOTS
+              value: /books/ebooks,/books/audiobooks,/books/comics
+            - name: READ_ALOUD_WORK_ROOT
+              value: /data/read-aloud/jobs
+            - name: READ_ALOUD_TMP_DIR
+              value: /data/read-aloud/tmp
+            - name: TMPDIR
+              value: /data/read-aloud/tmp
+            - name: XDG_DATA_HOME
+              value: /data/read-aloud
+            - name: READ_ALOUD_CTC_DEVICE
+              value: cpu
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 2000m
+              memory: 4Gi
+          startupProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - >-
+                  fetch('http://127.0.0.1:8787/health',
+                  {headers:{authorization:'Bearer '+
+                  process.env.READ_ALOUD_WORKER_TOKEN},
+                  signal:AbortSignal.timeout(4000)})
+                  .then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - >-
+                  fetch('http://127.0.0.1:8787/health',
+                  {headers:{authorization:'Bearer '+
+                  process.env.READ_ALOUD_WORKER_TOKEN},
+                  signal:AbortSignal.timeout(4000)})
+                  .then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - >-
+                  fetch('http://127.0.0.1:8787/health',
+                  {headers:{authorization:'Bearer '+
+                  process.env.READ_ALOUD_WORKER_TOKEN},
+                  signal:AbortSignal.timeout(4000)})
+                  .then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: data
+              mountPath: /data/read-aloud
+              subPath: read-aloud
+            - name: ebooks
+              mountPath: /books/ebooks
+              readOnly: true
+            - name: audiobooks
+              mountPath: /books/audiobooks
+              readOnly: true
+            - name: comics
+              mountPath: /books/comics
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: bookorbit-data
+        - name: ebooks
+          hostPath:
+            path: /mnt/media/BookOrbit/books
+            type: Directory
+        - name: audiobooks
+          hostPath:
+            path: /mnt/media/BookOrbit/audiobooks
+            type: Directory
+        - name: comics
+          hostPath:
+            path: /mnt/media/BookOrbit/comics
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bookorbit-read-aloud-worker
+  namespace: bookorbit
+spec:
+  type: ClusterIP
+  selector:
+    app: bookorbit-read-aloud-worker
+  ports:
+    - name: http
+      port: 8787
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bookorbit-read-aloud-worker
+  namespace: bookorbit
+spec:
+  podSelector:
+    matchLabels:
+      app: bookorbit-read-aloud-worker
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: bookorbit
+      ports:
+        - protocol: TCP
+          port: 8787

@@ -19,3 +19,4 @@ data:
   NODE_MAX_OLD_SPACE_SIZE: "2048"
   LIBRARY_BROWSE_ROOT: /books
   BOOK_DOCK_PATH: /data/book-dock
+  READ_ALOUD_WORKER_URL: http://bookorbit-read-aloud-worker:8787
