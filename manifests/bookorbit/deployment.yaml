@@ -50,6 +50,11 @@ spec:
             - configMapRef:
                 name: bookorbit-config
           env:
+            - name: READ_ALOUD_WORKER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: bookorbit-secrets
+                  key: READ_ALOUD_WORKER_TOKEN
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

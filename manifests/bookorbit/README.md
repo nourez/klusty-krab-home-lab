@@ -74,7 +74,7 @@ recursively chown the media root.
 ## Secrets
 
 Create a dedicated `bookorbit-secrets` Secret out of band. Do not commit it or
-reuse existing app/integration credentials. This script generates four
+reuse existing app/integration credentials. This script generates five
 independent values without printing them or putting them in command arguments:
 
 ```sh
@@ -86,6 +86,7 @@ values = {
     "JWT_SECRET": secrets.token_hex(32),
     "SETUP_BOOTSTRAP_TOKEN": secrets.token_hex(16),
     "BOOK_REQUEST_ENCRYPTION_KEY": secrets.token_hex(32),
+    "READ_ALOUD_WORKER_TOKEN": secrets.token_hex(32),
 }
 resource = {
     "apiVersion": "v1", "kind": "Secret",
@@ -121,6 +122,133 @@ make existing credentials unreadable. For an existing installation, add only
 this missing key to the Secret, keeping all other values intact, before syncing
 the deployment. Restart BookOrbit after adding the key if the deployment's
 Secret reference is already present.
+
+## CPU read-aloud worker (verified 2026-10-29)
+
+The API remains on `ghcr.io/bookorbit/bookorbit:3.6.0`. The worker uses the
+matching published `ghcr.io/bookorbit/bookorbit-read-aloud-worker:3.6.0`, pinned
+to its GHCR multi-platform digest (linux/amd64 and linux/arm64). Configuration,
+authenticated `/health`, UID/GID and filesystem layout were checked against
+[upstream read-aloud documentation](https://github.com/bookorbit/bookorbit/blob/main/docs/READ_ALOUD.md),
+the [3.6.0 Compose file](https://github.com/bookorbit/bookorbit/blob/v3.6.0/docker-compose.yml)
+and [worker image](https://github.com/bookorbit/bookorbit/blob/v3.6.0/workers/read-aloud/Dockerfile).
+
+This aligns an existing EPUB with its audiobook; it does not synthesize speech.
+The worker runs one job at a time, explicitly on CPU, with requests of 500m CPU
+and 1Gi RAM and limits of 2000m CPU and 4Gi RAM. Leave batch size and dtype at
+upstream defaults until measured. The N100 node had approximately 8Gi RAM in
+use at preflight; the worker's limit is a ceiling, not reserved headroom.
+
+`read-aloud-worker.yaml` adds a single-replica Recreate Deployment and ClusterIP
+Service at `bookorbit-read-aloud-worker:8787`. An ingress NetworkPolicy permits
+only same-namespace BookOrbit pods. No public route is needed. Outbound traffic
+remains allowed: first use of a language downloads its model over HTTPS
+(approximately 190MB for English).
+
+The three libraries use exactly the API's paths, mounted read-only in the
+worker. Its only writable data mount is `bookorbit-data` with `subPath:
+read-aloud` at `/data/read-aloud`; the API already sees this at
+`/data/read-aloud`. ReadWriteOnce allows these two pods on the same node. Jobs,
+scratch files and the model cache persist on the existing local USB volume;
+the worker does not mount the rest of the API data. There is no new PVC, quota,
+GPU allocation or model cache on the node root filesystem.
+
+Before merging/syncing this change:
+
+1. Back up app/database state and the Secret. On `klusty-krab-node-1`, verify the
+   USB mount as above, then ensure the shared directory exists and is writable
+   by UID/GID 1000. Preflight found it already present and correctly owned:
+
+   ```sh
+   sudo install -d -m 0755 -o 1000 -g 1000 /mnt/media/BookOrbit/app/read-aloud
+   ```
+
+2. Add only the missing token to the existing Secret. This preserves database
+   and encryption credentials and never prints the token. Do not run the fresh
+   installation Secret generator above against an initialized installation.
+
+   ```sh
+   python3 - <<'PY'
+   import json, secrets, subprocess
+   resource = json.loads(subprocess.check_output([
+       "kubectl", "-n", "bookorbit", "get", "secret", "bookorbit-secrets", "-o", "json",
+   ]))
+   if resource.get("data", {}).get("READ_ALOUD_WORKER_TOKEN"):
+       raise SystemExit("Token already exists; preserving it")
+   patch = {
+       "metadata": {"resourceVersion": resource["metadata"]["resourceVersion"]},
+       "stringData": {"READ_ALOUD_WORKER_TOKEN": secrets.token_hex(32)},
+   }
+   subprocess.run([
+       "kubectl", "-n", "bookorbit", "patch", "secret", "bookorbit-secrets",
+       "--type=merge", "--patch-file=/dev/stdin",
+   ], input=json.dumps(patch), text=True, check=True)
+   PY
+   ```
+
+3. Review and merge the PR, then let Argo CD sync. Both containers reference
+   `bookorbit-secrets/READ_ALOUD_WORKER_TOKEN`; the API gets
+   `READ_ALOUD_WORKER_URL` from its ConfigMap. The API Deployment change causes
+   a rollout. If rotating the token later, restart both Deployments through an
+   authorized rollout because environment variables do not refresh in place.
+
+After Argo sync, verify rollout and authenticated API-to-worker connectivity
+without printing the token:
+
+```sh
+kubectl -n argocd get application bookorbit
+kubectl -n bookorbit rollout status deployment/bookorbit --timeout=600s
+kubectl -n bookorbit rollout status deployment/bookorbit-read-aloud-worker --timeout=600s
+kubectl -n bookorbit exec deployment/bookorbit -- node -e '
+fetch(process.env.READ_ALOUD_WORKER_URL+"/health", {
+  headers: {authorization: "Bearer "+process.env.READ_ALOUD_WORKER_TOKEN},
+  signal: AbortSignal.timeout(10000)
+}).then(async r=>{if(!r.ok)throw Error("HTTP "+r.status);console.log(await r.json())})
+  .catch(e=>{console.error(e.message);process.exit(1)})'
+kubectl -n bookorbit exec deployment/bookorbit-read-aloud-worker -- sh -c \
+  'id; cat /proc/mounts; df -h /data/read-aloud'
+kubectl -n bookorbit top pods
+kubectl top nodes
+kubectl -n bookorbit logs deployment/bookorbit-read-aloud-worker --tail=100
+```
+
+Expect version `3.6.0`, CPU device, all three readable library roots, and free
+space on the data volume. Confirm all `/books/*` mounts report `ro` and
+`/data/read-aloud` reports `rw`. Readiness/startup/liveness probes authenticate
+against `/health`; tokens are never embedded in probe arguments.
+
+Run a small, legally owned EPUB plus matching audiobook through Book Details →
+Files → Create read-aloud. Both must be files of the same book in a qualifying
+multi-file library. Select the narration language and sentence highlighting.
+Record the job ID, input duration, elapsed time and starting restart counts.
+While it runs, use separate terminals for:
+
+```sh
+kubectl -n bookorbit logs -f deployment/bookorbit-read-aloud-worker --since=5m
+kubectl -n bookorbit get pods -l app=bookorbit-read-aloud-worker -w
+watch -n 10 'kubectl -n bookorbit top pods; kubectl top nodes'
+```
+
+Check model download, audio preparation, CPU inference, alignment and validation
+in the job activity log; periodically repeat the authenticated health command
+while inference is active. Confirm no OOM kills/restarts or node memory pressure,
+and record peak sampled CPU/memory (the CPU ceiling is two cores). Check free
+disk space: upstream estimates roughly 4× selected audio + 7× EPUB + emissions
+(about 115MB per 10h audio) + 512MB, with another output copy needed to publish.
+The existing PVC capacity is a binding declaration, not a quota.
+
+Review chapter match rates before publishing. If review is required, inspect
+unmatched chapters and re-sync or discard. For the sample, choose Keep both
+when offered, publish only after review, then verify highlighting, audio seeking
+and offline reading in a supported client. Confirm source EPUB/audio remain
+intact. Record results and resource samples before calling runtime validation
+complete. CPU jobs may take hours; a healthy HTTP endpoint alone is insufficient.
+
+If rollout fails, inspect events/logs for missing token, subPath permissions,
+image pull errors or model download failures. If a job exhausts the 4Gi limit,
+retain its job folder and investigate before increasing limits on this 16Gi
+host. Reverting this PR through GitOps disables the worker and API integration;
+the existing retained data PVC, libraries and added Secret key remain intact.
 
 ## GitOps rollout and initial Cloudflare Tunnel access
 
