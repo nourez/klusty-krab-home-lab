@@ -89,8 +89,7 @@ In Jellyfin's Network settings, enable remote connections and add the connector
 pod IPs to **Known Proxies**, updating them if the pods move. If using a CIDR for
 stability, verify and trust only the actual connector network; do not trust all
 IP addresses. Leave Base URL empty. `JELLYFIN_PublishedServerUrl` advertises the
-public URL; it does not create the Cloudflare route. The existing
-optimized-versions-server already references `https://jellyfin.nourez.dev`.
+public URL; it does not create the Cloudflare route. The former Streamyfin optimized-versions-server is retired separately.
 
 ## Rollback
 
