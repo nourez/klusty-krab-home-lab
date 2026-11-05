@@ -3,6 +3,8 @@ kind: PersistentVolumeClaim
 metadata:
     name: optimized-versions-server-cache
     namespace: optimized-versions-server
+    annotations:
+        argocd.argoproj.io/sync-options: Prune=false
     labels:
         app: optimized-versions-server
         component: transcoding-server

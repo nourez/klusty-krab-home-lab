@@ -1,46 +1,30 @@
-# Optimized Versions Server
+# Retired Optimized Versions Server
 
-This directory contains the standard Kubernetes manifests for the [Optimized Versions Server](https://github.com/streamyfin/optimized-versions-server), a companion server for Streamyfin that enables better video downloads by transcoding HLS streams into single video files.
+Streamyfin optimized downloads are no longer used. This directory retains only
+its namespace and 50Gi Longhorn cache PVC. The Argo Application remains active so
+it prunes the former Deployment and Service; deleting the Application alone
+would leave those resources orphaned because it has no deletion finalizer.
+The PVC is protected from automated pruning. No BookOrbit workloads are changed.
 
-## Components
+## Calibre Web cleanup
 
-- **Namespace**: `optimized-versions-server`
-- **Deployment**: Single replica transcoding server
-- **Service**: LoadBalancer service exposing port 3000 via MetalLB
-- **PVC**: 50Gi cache storage using Longhorn
+Calibre Web is also retired through the restored `apps/calibre-web-app.yaml`.
+Argo adopts its existing resources and sets its Deployment to zero replicas.
+Its previous image, media mounts, Service, and protected config PVC remain in
+`manifests/calibre-web/`. No manual administrator cleanup is required.
 
-## Configuration
+## Verification
 
-The server is configured with the following environment variables:
+After merge, Argo should remove the Optimized Versions Server Deployment and
+Service. The restored Calibre Web Application should scale its Deployment to zero
+and terminate its pod. Together these release 500m CPU requests, allowing Jellyfin's 500m
+request to fit (approximately 55m of scheduling headroom remains).
 
-- `NODE_ENV`: Set to "development"
-- `JELLYFIN_URL`: Points to your external Jellyfin instance
-- `MAX_CONCURRENT_JOBS`: Set to 1 (adjustable based on your hardware)
-
-## Access
-
-The service is exposed via MetalLB LoadBalancer on your local network:
-- MetalLB will assign a dedicated IP address from your configured IP pool
-- Access the service at `http://<assigned-ip>:3000`
-- No TLS termination - plain HTTP for local network access
-
-## Usage with Streamyfin
-
-Configure your Streamyfin app to use this server for optimized downloads:
-- Server URL: `http://<assigned-ip>:3000`
-- The server will transcode HLS streams to enable background downloads
-
-## Finding the Assigned IP
-
-After deployment, you can find the assigned IP address with:
-```bash
-kubectl get service optimized-versions-server -n optimized-versions-server
+```sh
+kubectl -n optimized-versions-server get deployment,service,pvc
+kubectl -n calibre-web get deployment,service,pvc
+kubectl -n jellyfin rollout status deployment/jellyfin --timeout=600s
 ```
 
-## Resources
-
-The deployment is configured with:
-- **Requests**: 512Mi RAM, 250m CPU
-- **Limits**: 2Gi RAM, 1000m CPU
-
-Adjust these based on your transcoding workload and available cluster resources. 
+Jellyfin may still need application or image troubleshooting once scheduled;
+this change resolves the identified CPU scheduling shortage only.
