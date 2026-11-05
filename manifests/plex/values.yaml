@@ -1,3 +1,8 @@
+# Retired: keep Argo managing Plex at zero replicas to release the GPU
+# and preserve its PVCs for rollback. See manifests/jellyfin/README.md.
+controller:
+    replicas: 0
+
 env:
     TZ: "America/Toronto"
     PUID: "1000"
@@ -26,7 +31,7 @@ persistence:
         storageClass: longhorn
         accessMode: ReadWriteOnce
         size: 50Gi
-        
+
     dev-dri:
             enabled: true
             type: hostPath
