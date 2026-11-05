@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        intel.feature.node.kubernetes.io/gpu: "true"
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        supplementalGroups: [44, 993]
+      containers:
+        - name: jellyfin
+          image: jellyfin/jellyfin:12.4
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: America/Toronto
+            - name: JELLYFIN_PublishedServerUrl
+              value: https://jellyfin.nourez.dev
+          ports:
+            - name: http
+              containerPort: 8096
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+              gpu.intel.com/i915: 1
+            limits:
+              cpu: "2"
+              memory: 4Gi
+              gpu.intel.com/i915: 1
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            failureThreshold: 5
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: cache
+              mountPath: /cache
+            - name: transcode
+              mountPath: /transcode
+            - name: media
+              mountPath: /external-drive
+              readOnly: true
+            - name: media
+              mountPath: /media
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: jellyfin-config
+        - name: cache
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: transcode
+          persistentVolumeClaim:
+            claimName: jellyfin-transcode
+        - name: media
+          hostPath:
+            path: /mnt/media
+            type: Directory
