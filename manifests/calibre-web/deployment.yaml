@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calibre-web
+  namespace: calibre-web
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: calibre-web
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: calibre-web
+    spec:
+      containers:
+      - env:
+        - name: PUID
+          value: '1000'
+        - name: PGID
+          value: '1000'
+        - name: TZ
+          value: America/Toronto
+        image: crocodilestick/calibre-web-automated:latest
+        imagePullPolicy: IfNotPresent
+        name: calibre-web-automated
+        ports:
+        - containerPort: 8083
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '1'
+            memory: 1Gi
+          requests:
+            cpu: 250m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /config
+          name: config
+        - mountPath: /calibre-library
+          name: calibre-library
+        - mountPath: /cwa-book-ingest
+          name: cwa-book-ingest
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: calibre-web-config
+      - hostPath:
+          path: /mnt/media/Books
+          type: Directory
+        name: calibre-library
+      - emptyDir:
+          sizeLimit: 10Gi
+        name: cwa-book-ingest

@@ -8,23 +8,16 @@ The PVC is protected from automated pruning. No BookOrbit workloads are changed.
 
 ## Calibre Web cleanup
 
-Calibre Web is also retired, but its Argo Application is already absent and its
-Deployment and Service are orphaned. The Codex cluster account has read access
-but cannot delete or scale these resources. An administrator must run:
-
-```sh
-kubectl -n calibre-web delete deployment/calibre-web service/calibre-web
-```
-
-Keep `calibre-web/calibre-web-config` and the namespace to retain configuration.
-No library files or PVCs need to be removed. Calibre Web uses the image
-`crocodilestick/calibre-web-automated:latest`.
+Calibre Web is also retired through the restored `apps/calibre-web-app.yaml`.
+Argo adopts its existing resources and sets its Deployment to zero replicas.
+Its previous image, media mounts, Service, and protected config PVC remain in
+`manifests/calibre-web/`. No manual administrator cleanup is required.
 
 ## Verification
 
 After merge, Argo should remove the Optimized Versions Server Deployment and
-Service. After the administrator command above, the Calibre Web pod should also
-terminate. Together these release 500m CPU requests, allowing Jellyfin's 500m
+Service. The restored Calibre Web Application should scale its Deployment to zero
+and terminate its pod. Together these release 500m CPU requests, allowing Jellyfin's 500m
 request to fit (approximately 55m of scheduling headroom remains).
 
 ```sh
