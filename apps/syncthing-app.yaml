@@ -5,12 +5,22 @@ metadata:
     namespace: argocd
 spec:
     project: default
-    source:
-        repoURL: git@github.com:nourez/klusty-krab-home-lab.git
-        targetRevision: HEAD
-        path: manifests/syncthing
-        directory:
-            recurse: true
+    sources:
+        - repoURL: https://bjw-s-labs.github.io/helm-charts
+          chart: app-template
+          targetRevision: 5.0.1
+          helm:
+              valueFiles:
+                  - $values/manifests/syncthing/values.yaml
+        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+          targetRevision: HEAD
+          ref: values
+        - repoURL: git@github.com:nourez/klusty-krab-home-lab.git
+          targetRevision: HEAD
+          path: manifests/syncthing
+          directory:
+              recurse: true
+              exclude: values.yaml
     destination:
         server: https://kubernetes.default.svc
         namespace: syncthing
