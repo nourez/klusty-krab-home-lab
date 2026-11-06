@@ -16,6 +16,8 @@ spec:
           - "--certificatesresolvers.myresolver.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
         service:
           enabled: true
+          annotations:
+            metallb.io/loadBalancerIPs: "10.0.0.225"
         ingressRoute:
           dashboard:
             enabled: true

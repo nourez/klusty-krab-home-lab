@@ -1,0 +1,20 @@
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: jellyfin-letsencrypt
+  namespace: jellyfin
+spec:
+  acme:
+    email: nourez.raw@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: jellyfin-letsencrypt-account
+    solvers:
+      - selector:
+          dnsNames:
+            - jellyfin.nourez.dev
+        dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: jellyfin-cloudflare-dns
+              key: api-token
