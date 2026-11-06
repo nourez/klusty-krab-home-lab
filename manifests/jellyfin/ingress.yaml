@@ -1,0 +1,43 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jellyfin-https
+  namespace: jellyfin
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`jellyfin.nourez.dev`)
+      kind: Rule
+      services:
+        - name: jellyfin
+          port: 8096
+  tls:
+    secretName: jellyfin-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: jellyfin-https-redirect
+  namespace: jellyfin
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jellyfin-http
+  namespace: jellyfin
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`jellyfin.nourez.dev`)
+      kind: Rule
+      middlewares:
+        - name: jellyfin-https-redirect
+      services:
+        - name: jellyfin
+          port: 8096

@@ -83,13 +83,87 @@ Both cloudflared pods can reach this ClusterIP service using cluster DNS.
 Keep any existing media hostname as an additional route to the same origin if
 clients use it. Retire its old Plex origin only after Jellyfin works externally.
 Do not point the tunnel to localhost:8096 (that is the connector pod itself).
-No node port, public ingress, or new tunnel token is required.
+The tunnel continues to use the ClusterIP origin directly. Local clients use
+the separate Traefik route described below.
 
 In Jellyfin's Network settings, enable remote connections and add the connector
 pod IPs to **Known Proxies**, updating them if the pods move. If using a CIDR for
 stability, verify and trust only the actual connector network; do not trust all
 IP addresses. Leave Base URL empty. `JELLYFIN_PublishedServerUrl` advertises the
 public URL; it does not create the Cloudflare route. The former Streamyfin optimized-versions-server is retired separately.
+
+## Local HTTPS and AdGuard split DNS
+
+LAN clients use `https://jellyfin.nourez.dev` through Traefik at `10.0.0.225`.
+AdGuard resolves that hostname to Traefik; requests and video stay on the LAN.
+Outside the LAN, public DNS continues to use the existing Cloudflare Tunnel.
+The Traefik HelmChartConfig pins its current MetalLB address to `10.0.0.225`.
+No router port forwarding is needed for this setup.
+
+The namespaced cert-manager Issuer obtains and renews a publicly trusted Let's
+Encrypt certificate via Cloudflare DNS-01. The existing Traefik resolver uses
+TLS-ALPN-01, which depends on public port 443 reaching Traefik; this route instead
+reads the cert-manager-managed `jellyfin-tls` Secret. A Cloudflare Origin CA
+certificate is not appropriate here because LAN clients connect directly and
+normally do not trust that CA.
+
+### One-time credential setup
+
+Create a Cloudflare API token limited to the **nourez.dev** zone with
+**Zone → DNS → Edit** and **Zone → Zone → Read** permissions. The tunnel token
+is a different credential. Store the DNS token out-of-band in namespace
+`jellyfin`, Secret `jellyfin-cloudflare-dns`, key `api-token`.
+
+An administrator can create it without putting the token in shell history or
+command-line arguments (Bash; do not enable shell tracing):
+
+```sh
+read -r -s -p 'Cloudflare DNS API token: ' jellyfin_dns_token
+printf '\n'
+printf '%s' "$jellyfin_dns_token" | kubectl -n jellyfin create secret generic \
+  jellyfin-cloudflare-dns --from-file=api-token=/dev/stdin
+unset jellyfin_dns_token
+```
+
+Keep the token available for automatic renewals. Argo manages the Issuer and
+Certificate; cert-manager manages its account key and TLS Secret. Neither the
+DNS token nor certificate private keys belong in git. If the Secret is missing,
+the certificate cannot issue and local HTTPS will not be trusted yet.
+
+### Enable the LAN DNS rewrite after the certificate is ready
+
+1. Merge and let Argo sync. With the DNS token Secret present, verify:
+   ```sh
+   kubectl -n jellyfin wait --for=condition=Ready certificate/jellyfin-tls --timeout=300s
+   curl --resolve jellyfin.nourez.dev:443:10.0.0.225 \
+     https://jellyfin.nourez.dev/health
+   ```
+   The response should be `Healthy` without skipping certificate verification.
+   If issuance stalls, inspect the Issuer, Certificate, Orders, and Challenges.
+   DNS-01 self-checks need visibility of the public `_acme-challenge` TXT record;
+   local DNS must not hide that record.
+2. In AdGuard Home (`http://10.0.0.241`), under **Filters → DNS rewrites**, add:
+
+   | Domain | Answer |
+   | --- | --- |
+   | `jellyfin.nourez.dev` | `10.0.0.225` |
+
+   Add the exact hostname, not a wildcard for the zone. AdGuard's runtime
+   configuration is on its PVC and this rewrite is configured through its UI;
+   it is not applied by these Kubernetes manifests. Keep public DNS pointed at
+   Cloudflare, and flush cached DNS on clients after adding the local rewrite.
+3. From a LAN client using AdGuard, verify DNS returns `10.0.0.225`, then open
+   `https://jellyfin.nourez.dev`. Verify HTTP redirects to HTTPS. Check that
+   IPv6/AAAA responses do not select a public address; clients bypassing AdGuard
+   through encrypted DNS, a VPN, or another resolver may still use the tunnel.
+4. Verify seeking and playback locally, then test the same hostname on cellular
+   to confirm the public tunnel path still works. Add Traefik's actual source
+   pod address to Jellyfin's Known Proxies if forwarded client IPs are needed,
+   alongside the existing cloudflared proxies; do not trust all addresses.
+
+To undo split DNS, remove the AdGuard rewrite first, then remove the Jellyfin
+IngressRoutes/Issuer/Certificate from git. Leave the Cloudflare tunnel origin
+at `http://jellyfin.jellyfin.svc.cluster.local:8096`.
 
 ## Rollback
 
@@ -105,3 +179,5 @@ explicit deletion. Do not delete namespaces or storage as part of rollback.
 - [Official container setup](https://jellyfin.org/docs/general/installation/container/)
 - [Intel acceleration](https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel/)
 - [Reverse proxy settings](https://jellyfin.org/docs/general/post-install/networking/reverse-proxy/)
+- [Cloudflare DNS-01 credentials](https://cert-manager.io/docs/configuration/acme/dns01/cloudflare/)
+- [Traefik IngressRoute TLS](https://doc.traefik.io/traefik/v3.3/reference/routing-configuration/kubernetes/crd/http/ingressroute/)
