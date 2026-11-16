@@ -282,6 +282,20 @@ long requests should be tested with representative files before relying on
 remote imports. A hostname response alone is not proof that audiobook seeking,
 downloads or Watch transfers work.
 
+### Direct LAN access
+
+BookOrbit is also available at `http://10.0.0.225` through Traefik's LAN
+LoadBalancer. The IngressRoute accepts this IP alongside `bookorbit.nourez.net`,
+so clients can connect by IP without a DNS or Host header override. Other
+hostnames on the shared ingress address keep their existing routes.
+
+For iOS tunnel-isolation testing, use `http://10.0.0.225` as the server address
+while connected to the home LAN. This bypasses Cloudflare and reaches the same
+BookOrbit Service through Traefik. Public access remains
+`https://bookorbit.nourez.net` through the existing tunnel. `APP_URL` and
+`CLIENT_URL` remain set to the public URL, so generated links can still point
+there. LAN HTTPS is not configured for the IP address.
+
 ## Validation
 
 BookOrbit requests 1Gi of memory and has a 4Gi limit. Its Node old-space heap is

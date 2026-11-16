@@ -6,7 +6,7 @@ metadata:
 spec:
   entryPoints: [web]
   routes:
-    - match: Host(`bookorbit.nourez.net`)
+    - match: Host(`bookorbit.nourez.net`) || Host(`10.0.0.225`)
       kind: Rule
       services:
         - name: bookorbit
