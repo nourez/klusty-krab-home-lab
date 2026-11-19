@@ -50,6 +50,11 @@ spec:
             - configMapRef:
                 name: bookorbit-config
           env:
+            - name: AI_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: bookorbit-secrets
+                  key: AI_ENCRYPTION_KEY
             - name: READ_ALOUD_WORKER_TOKEN
               valueFrom:
                 secretKeyRef:

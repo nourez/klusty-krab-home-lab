@@ -74,7 +74,7 @@ recursively chown the media root.
 ## Secrets
 
 Create a dedicated `bookorbit-secrets` Secret out of band. Do not commit it or
-reuse existing app/integration credentials. This script generates five
+reuse existing app/integration credentials. This script generates six
 independent values without printing them or putting them in command arguments:
 
 ```sh
@@ -87,6 +87,7 @@ values = {
     "SETUP_BOOTSTRAP_TOKEN": secrets.token_hex(16),
     "BOOK_REQUEST_ENCRYPTION_KEY": secrets.token_hex(32),
     "READ_ALOUD_WORKER_TOKEN": secrets.token_hex(32),
+    "AI_ENCRYPTION_KEY": secrets.token_hex(32),
 }
 resource = {
     "apiVersion": "v1", "kind": "Secret",
@@ -122,6 +123,42 @@ make existing credentials unreadable. For an existing installation, add only
 this missing key to the Secret, keeping all other values intact, before syncing
 the deployment. Restart BookOrbit after adding the key if the deployment's
 Secret reference is already present.
+
+## AI provider encryption (BookOrbit 3.9.0+)
+
+`AI_ENCRYPTION_KEY` encrypts saved AI provider keys and header values. It must
+be an independent 32-byte random key encoded as 64 hex characters, as described
+in the [upstream AI provider guide](https://github.com/bookorbit/bookorbit/blob/v3.9.0/docs/AI_PROVIDERS.md).
+The deployment reads it from `bookorbit-secrets`. Back it up with the database;
+replacing it makes previously saved AI credentials unreadable.
+
+For an existing installation, run this before syncing the deployment. It adds
+only the missing key and preserves all existing credentials without printing them:
+
+```sh
+python3 - <<'PY'
+import json, secrets, subprocess
+kubectl = ["kubectl", "--request-timeout=15s", "-n", "bookorbit"]
+resource = json.loads(subprocess.check_output(
+    [*kubectl, "get", "secret", "bookorbit-secrets", "-o", "json"], text=True))
+if resource.get("data", {}).get("AI_ENCRYPTION_KEY"):
+    print("AI_ENCRYPTION_KEY already exists; preserving it")
+else:
+    patch = {
+        "metadata": {"resourceVersion": resource["metadata"]["resourceVersion"]},
+        "stringData": {"AI_ENCRYPTION_KEY": secrets.token_hex(32)},
+    }
+    subprocess.run(
+        [*kubectl, "patch", "secret", "bookorbit-secrets", "--type=merge",
+         "--patch-file=/dev/stdin"],
+        input=json.dumps(patch), text=True, check=True, capture_output=True)
+    print("AI_ENCRYPTION_KEY added")
+PY
+```
+
+Merge the deployment change and let Argo CD sync it. The new environment variable
+triggers a rollout. If the reference was already deployed, restart BookOrbit
+after adding the Secret key. Then retry saving the provider in Settings → Server → AI.
 
 ## CPU read-aloud worker (verified 2026-10-29)
 
